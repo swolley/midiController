@@ -1,0 +1,58 @@
+@import "fonts.css";
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(to right, #0c0c0c, black, #0c0c0c);
+    margin: 0;
+    overflow: hidden;
+    height: 100vh;
+}
+
+#app {
+    height: 100vh;
+}
+
+::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+}
+
+::-webkit-scrollbar-track {
+    border-radius: 10px;
+    background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.border-3d {
+    @apply border-2;
+    border-top-color: #1e1e1e;
+    border-left-color: #181818;
+    border-bottom-color: #646464;
+    border-right-color: #8d8d8d;
+}
+
+.border-3d.invert {
+    @apply border-2;
+    border-top-color: #646464;
+    border-left-color: #8d8d8d;
+    border-bottom-color: #1e1e1e;
+    border-right-color: #181818;
+}
+
+.btn {
+    @apply cursor-pointer px-1 opacity-90 hover:opacity-100 transition-all rounded flex items-center justify-center
+}
+.btn-outline {
+    @apply bg-white/40 hover:bg-white/60 text-black/90 hover:text-black/100 border border-black shadow;
+}
+
+.controller-label {
+    @apply mt-1 text-xs uppercase font-bold;
+}

@@ -1,0 +1,9 @@
+@font-face {
+	font-family: "Digital-7";
+    src: url("../assets/58045dabdc3a361cb9bb9faf2f1dd1f3.eot"); /* IE9*/
+    src: url("../assets/58045dabdc3a361cb9bb9faf2f1dd1f3.eot?#iefix") format("embedded-opentype"), /* IE6-IE8 */
+    url("../assets/58045dabdc3a361cb9bb9faf2f1dd1f3.woff2") format("woff2"), /* chrome firefox */
+    url("../assets/58045dabdc3a361cb9bb9faf2f1dd1f3.woff") format("woff"), /* chrome firefox */
+    url("../assets/58045dabdc3a361cb9bb9faf2f1dd1f3.ttf") format("truetype"), /* chrome firefox opera Safari, Android, iOS 4.2+*/
+    url("../assets/58045dabdc3a361cb9bb9faf2f1dd1f3.svg#Digital-7") format("svg"); /* iOS 4.1- */
+}
