@@ -3,7 +3,7 @@ import BoxContainer from "@/components/rack/BoxContainer.vue";
 import RackContainer from "@/components/rack/RackContainer.vue";
 import ConsoleDevice from "@/components/devices/ConsoleDevice.vue";
 import ToolBar from "@/components/toolbar/ToolBar.vue";
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useRack } from "@/stores/useRack";
 import ModalPanel from "@/components/modals/ModalPanel.vue";
 import OutboardDevice from "@/components/devices/OutboardDevice.vue";
@@ -15,16 +15,21 @@ import DeviceEditor from "@/components/editor/DeviceEditor.vue";
 import ConfirmDialog from "@/components/modals/ConfirmDialog.vue";
 import type RackConsole from "@/services/classes/RackConsole";
 import AppConfig from "@/components/editor/AppConfig.vue";
+import type { Outboard } from "@/services/classes/Outboard";
 
 const rackStore = useRack();
-await rackStore.init();
+const initialized = ref<boolean>(false);
+await rackStore
+    .init()
+    .then(() => (initialized.value = true))
+    .catch(() => (initialized.value = false));
 
 const showConsole = ref<boolean>(true);
 const collapseAll = ref<boolean>(false);
-const showStore = ref<boolean>(false);
-const selectedDevice = ref<IDeviceConfig | undefined>();
+const showStore = ref<boolean>(rackStore.rackDevices.length === 0);
+const selectedDevice = ref<IDeviceConfig | undefined>(rackStore.rackDevices.length ? rackStore.rackDevices[0] : undefined);
 const openSettings = ref<boolean>(false);
-
+const openEditor = ref<boolean>(false);
 const currentRemoveDeviceCb = ref<CallableFunction | null>(null);
 
 function toggleConsole() {
@@ -32,7 +37,8 @@ function toggleConsole() {
 }
 
 function toggleEditor(device?: IDeviceConfig) {
-    selectedDevice.value = device;
+    if (device) selectedDevice.value = device;
+    openEditor.value = device !== undefined;
 }
 
 function toggleStore() {
@@ -45,8 +51,18 @@ function toggleCollapseAll(collapse: boolean) {
 }
 
 function onDrop(dropResult: DragResult, list: "store" | "rack") {
-    rackStore.reorderDevices(dropResult, list);
-    // this.items = applyDrag(this.items, dropResult);
+    console.log(dropResult);
+    if (dropResult.removedIndex !== null && dropResult.addedIndex === null) {
+        rackStore.moveDevice(dropResult, list, list === "store" ? "rack" : "store");
+    } else if (dropResult.removedIndex !== dropResult.addedIndex) {
+        rackStore.reorderDevices(dropResult, list);
+    }
+
+    if (selectedDevice.value && rackStore.rackDevices.findIndex((d) => d.id === selectedDevice.value?.id) === -1) {
+        selectedDevice.value = undefined;
+    }
+
+    if (!selectedDevice.value && rackStore.rackDevices.length === 1) selectedDevice.value = rackStore.rackDevices[0];
 }
 
 function touchStart(touchEvent: TouchEvent) {
@@ -77,6 +93,15 @@ function createDevice() {
     const newDevice = rackStore.createDevice();
     toggleEditor(newDevice);
 }
+
+function onDeviceClick(device: Outboard) {
+    selectedDevice.value = device;
+    document.title = "App - " + device.label;
+}
+
+onMounted(() => {
+    if (selectedDevice.value) document.title = "App - " + selectedDevice.value.label;
+});
 </script>
 
 <template>
@@ -87,7 +112,7 @@ function createDevice() {
             :rack-devices="rackStore.rackDevices"
             @dragdevice="(dropResult: DragResult) => onDrop(dropResult, 'store')"
             @removedevice="askRemoveDevice"
-            @opendeditor="toggleEditor"
+            @openeditor="toggleEditor"
             @createdevice="createDevice"
         />
         <!-- box -->
@@ -111,16 +136,22 @@ function createDevice() {
                     orientation="vertical"
                     v-if="rackStore.midi"
                     @drop="(dropResult: DragResult) => onDrop(dropResult, 'rack')"
+                    class="h-full"
                 >
                     <!-- devices -->
                     <Draggable v-for="device in rackStore.rackDevices" :key="device.id">
                         <OutboardDevice
                             :background="device.backgroundColor"
                             :collapsable="true"
+                            :draggable="true"
                             :collapsed="collapseAll"
+                            :selected="selectedDevice !== undefined && selectedDevice.id === device.id"
                             :device="device"
                             :midi="(rackStore.midi as Midi)"
+                            :is-selected="selectedDevice !== undefined && selectedDevice.id === device.id"
+                            :init-completed="initialized"
                             @openeditor="() => toggleEditor(device)"
+                            @click="onDeviceClick(device)"
                         />
                     </Draggable>
                 </Container>
@@ -138,7 +169,7 @@ function createDevice() {
         </BoxContainer>
 
         <Teleport to="body">
-            <ModalPanel v-if="selectedDevice" :show="selectedDevice !== undefined" @close="() => toggleEditor()">
+            <ModalPanel v-if="selectedDevice && openEditor" :show="selectedDevice && openEditor" @close="() => toggleEditor()">
                 <template v-slot:body>
                     <DeviceEditor :device="selectedDevice" class="px-5" />
                 </template>
@@ -152,7 +183,7 @@ function createDevice() {
 
             <ConfirmDialog
                 v-if="currentRemoveDeviceCb"
-                message="Vuoi eliminare il device?"
+                message="Would you like to delete the selected device?"
                 :yes-callback="currentRemoveDeviceCb"
                 :no-callback="() => (currentRemoveDeviceCb = null)"
                 @close="currentRemoveDeviceCb = null"

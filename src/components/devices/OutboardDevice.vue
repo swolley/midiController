@@ -2,7 +2,7 @@
 import DeviceContainer from "./DeviceContainer.vue";
 import type { IMessageControllerConfigs, ILcdControllerConfigs, LedStatus } from "@/services/types/devices";
 import { useColors } from "@/composables/useColors";
-import { ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useDevice } from "@/composables/useDevice";
 import UploadIcon from "../icons/UploadIcon.vue";
 import DownloadIcon from "../icons/DownloadIcon.vue";
@@ -18,7 +18,11 @@ import type { Outboard } from "@/services/classes/Outboard";
 const props = defineProps<{
     collapsable: boolean;
     collapsed: boolean;
+    selected: boolean;
     device: Outboard;
+    isSelected: boolean;
+    initCompleted: boolean;
+    draggable?: boolean;
     midi: Midi;
 }>();
 
@@ -87,6 +91,25 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
         handleBlink(sent);
     }
 }
+
+let awaitingInit: number | null = null;
+const stepCharacters = ["  _", " _ ", "_  "];
+let awaitingStep = Math.floor(Math.random() * stepCharacters.length);
+
+onMounted(() => {
+    if (!props.initCompleted)
+        awaitingInit = setInterval(() => {
+            lastValue.value = stepCharacters[awaitingStep];
+            awaitingStep = (awaitingStep + 1) % 3;
+        }, 250);
+});
+
+watch(
+    () => props.initCompleted,
+    (newValue, oldValue) => {
+        if (awaitingInit && !oldValue && newValue) clearInterval(awaitingInit);
+    }
+);
 </script>
 
 <template>
@@ -94,14 +117,19 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
         :background="device.backgroundColor"
         :collapsable="collapsable"
         :collapsed="collapsed"
+        :selected="selected"
+        :draggable="draggable"
         display="vertical"
         :data-id="device.id"
         :label="device.label"
         class="device-container"
     >
         <template v-slot:header>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2" :class="!isSelected ? 'opacity-40 pointer-events-none' : ''">
                 <LightLed :status="lightStatus" class="mr-2" />
+                <button v-if="!device.stock" class="btn btn-outline h-6 aspect-square" :class="{ invert: outPanel.isFgInverted }" title="Open Device Settings">
+                    <PaletteIcon @click="$emit('openeditor')" />
+                </button>
                 <template v-if="midi.isSysexEnabled() && hasPatch">
                     <button class="btn btn-outline h-6 aspect-square" :class="{ invert: outPanel.isFgInverted }" title="Send Sysex message">
                         <UploadIcon />
@@ -111,7 +139,7 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
                     </button>
                 </template>
                 <select class="btn border-3d text-xs uppercase h-6" :class="{ invert: outPanel.isFgInverted }" title="Set Midi input/output Interface">
-                    <option v-for="(output, idx) in midi.outputs" :key="idx" :value="idx" @change="changeInteface">
+                    <option v-for="(output, idx) in midi.activeOutputs" :key="idx" :value="idx" @change="changeInteface">
                         {{ (output.manufacturer ? output.manufacturer + " - " : "") + output.name }}
                     </option>
                 </select>
@@ -120,9 +148,6 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
                         {{ "Channel " + channel }}
                     </option>
                 </select>
-                <button class="btn btn-outline h-6 aspect-square" :class="{ invert: outPanel.isFgInverted }" title="Open Device Settings">
-                    <PaletteIcon @click="$emit('openeditor')" />
-                </button>
             </div>
         </template>
 
@@ -135,7 +160,7 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
                     :invert="outPanel.isFgInverted"
                     @changevalue="(value) => dispatchPCMessage(lcd, value)"
                 />
-                <LcdDisplay class="hidden lg:flex" :invert="outPanel.isFgInverted" label="value" :value="lastValue" :note="lastNote" />
+                <LcdDisplay :invert="outPanel.isFgInverted" label="value" :value="lastValue" :note="lastNote" />
             </div>
             <div
                 class="flex flex-col xl:flex-row py-2 px-3 rounded-lg gap-2 items-start lg:items-center justify-center mx-5"
@@ -147,6 +172,9 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
                     'border-style': 'solid',
                 }"
             >
+                <div class="hidden 2xl:flex 2xl:shrink items-center mr-4">
+                    <img v-if="device.logo" :src="device.logo" class="opacity-95 device-logo max-w-[160px] max-h-[68px]" />
+                </div>
                 <div class="grid gap-2 grid-flow-col" v-if="toggles.length">
                     <ToggleButton
                         v-for="(toggle, idx) in toggles"

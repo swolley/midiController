@@ -1,24 +1,8 @@
 <script setup lang="ts">
-/* inspired by jquery.rotaryswitch.js Version 1.0.1
-
-Copyright 2014 Red White Silver GmbH
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 import type { IMessageControllerConfigs, RotaryStyle } from "@/services/types/devices";
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import ControllerLabel from "./ControllerLabel.vue";
+import { getOffset } from "./../../services/classes/Utils";
 
 const emit = defineEmits(["changevalue"]);
 const props = withDefaults(
@@ -27,39 +11,78 @@ const props = withDefaults(
         invert: boolean;
         beginDeg?: number;
         lengthDeg?: number;
-        snapInMotion?: boolean;
+        // snapInMotion?: boolean;
         // minimumOverMaximum?: boolean;
-        step?: number;
+        // step?: number;
         style: RotaryStyle;
     }>(),
     {
         beginDeg: 45,
         lengthDeg: 270,
-        snapInMotion: false,
+        // snapInMotion: false,
         // minimumOverMaximum: true,
-        step: 1,
+        // step: 1,
     }
 );
-const currentValue = ref<number>((props.controller.value || props.controller.minValue || 0) / 360);
 const rotary = ref<HTMLElement>();
-const steps = Math.abs((props.controller.maxValue || 0) - (props.controller.minValue || 127));
+
+const currentValue = ref<number>(props.controller.value || props.controller.minValue || 0);
+const steps = (props.controller.maxValue || 127) - (props.controller.minValue || 0);
 const maxDeg = props.beginDeg + props.lengthDeg;
 const degPerStep = props.lengthDeg / steps;
-const rotate = ref<number>(props.beginDeg);
-const rotateStyle = computed(() => `${currentValue.value - props.beginDeg - 90}deg`);
-let startY = 0;
+const rotate = computed(() => currentValue.value * degPerStep - props.beginDeg - 90);
+const rotateStyle = computed(() => `${rotate.value}deg`);
 
+let startY = 0;
+let direction = 0;
+let movement = 0;
+let isChanging = false;
+
+let changeTimeout: number | null = null;
+
+function onMouseWheel(e: WheelEvent) {
+    if (e.deltaY < 0 && currentValue.value < (props.controller.maxValue || 127)) {
+        currentValue.value++;
+    } else if (currentValue.value > (props.controller.minValue || 0)) {
+        currentValue.value--;
+    }
+    console.log(currentValue.value, rotate.value);
+}
 function onMouseDown(e: MouseEvent) {
-    startY = e.pageY;
-    document.addEventListener("mouseup", onMouseUp);
-    document.addEventListener("mousemove", onMouseMove);
+    if (changeTimeout) clearTimeout(changeTimeout);
+    if (e.ctrlKey) {
+        resetToMiddleValue();
+    } else {
+        startMouseRotation(e);
+    }
+}
+function onMouseMove(e: MouseEvent) {
+    const degrees = calculateMoveDeg(e.pageY);
+    if (degrees !== movement) {
+        isChanging = true;
+        movement = degrees;
+        currentValue.value = Math.round(degrees / degPerStep);
+    }
 }
 function onMouseUp() {
     document.removeEventListener("mouseup", onMouseUp);
     document.removeEventListener("mousemove", onMouseMove);
+    if (isChanging) {
+        isChanging = false;
+        changeTimeout = setTimeout(() => {
+            emit("changevalue", currentValue.value);
+            changeTimeout = null;
+        }, 250);
+    }
 }
-function onMouseMove(e: MouseEvent) {
-    rotate.value = calculateMoveDeg(e.pageY);
+function startMouseRotation(e: MouseEvent) {
+    startY = e.pageY;
+    direction = rotary.value && e.pageX > getOffset(rotary.value || null).left ? -1 : 1;
+    document.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("mousemove", onMouseMove);
+}
+function resetToMiddleValue() {
+    currentValue.value = Math.round(steps / 2);
 }
 
 function onTouchStart(event: TouchEvent) {
@@ -154,23 +177,26 @@ function onTouchStart(event: TouchEvent) {
 //     currentValue.value = deg;
 // }
 function calculateMoveDeg(mouseY: number): number {
-    let diff = startY - mouseY;
-    // rotate.value += diff;
-    console.log(rotate.value + diff);
-
-    // if (diff < 0) diff = diff + 360;
-    const realValue = Math.round((diff % degPerStep) * degPerStep);
-    if (realValue !== currentValue.value) {
-        if (diff > maxDeg) {
-            diff = maxDeg;
-        } else if (diff < props.beginDeg) {
-            diff = props.beginDeg;
-        } else {
-            diff = realValue;
-        }
+    let diff = (startY + mouseY * direction) % 360;
+    if (diff > maxDeg /*|| (startY - mouseY) / 360 > 1*/) {
+        diff = maxDeg;
+    } else if (diff < props.beginDeg) {
+        diff = props.beginDeg;
     }
-    return diff;
+
+    const steps = Math.round(diff / degPerStep);
+    const degrees = steps * degPerStep;
+
+    console.log("diff:", diff, "degrees:", degrees, "steps:", steps, "minDeg:", props.beginDeg, "maxDeg:", maxDeg);
+    return steps * degPerStep;
 }
+
+onMounted(() => {
+    if (rotary.value) rotary.value.addEventListener("wheel", onMouseWheel);
+});
+onUnmounted(() => {
+    if (rotary.value) rotary.value.removeEventListener("wheel", onMouseWheel);
+});
 </script>
 
 <template>
@@ -181,7 +207,7 @@ function calculateMoveDeg(mouseY: number): number {
             :class="style"
             @mousedown.prevent="onMouseDown"
             @touchstart.prevent="onTouchStart"
-            :style="{ transform: `rotate(${rotateStyle})` }"
+            @dblclick.prevent="resetToMiddleValue"
         >
             <input
                 type="number"
@@ -190,7 +216,7 @@ function calculateMoveDeg(mouseY: number): number {
                 v-model="currentValue"
                 :hidden="true"
             />
-            <div class="switch"></div>
+            <div class="switch" :style="{ transform: `rotate(${rotateStyle})` }"></div>
         </div>
         <ControllerLabel v-if="controller" :label="controller.label" :invert="invert" />
     </div>
@@ -198,7 +224,7 @@ function calculateMoveDeg(mouseY: number): number {
 
 <style scoped lang="scss">
 .rotaryswitchPlugin {
-    @apply relative cursor-pointer shadow-md rounded-full;
+    @apply relative cursor-pointer shadow-md rounded-full active:cursor-ns-resize;
     width: 51px;
     height: 51px;
     background-size: 51px;

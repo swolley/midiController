@@ -13,9 +13,19 @@ export class Outboard implements IDeviceConfig {
     public stock: boolean;
     public category?: string;
     public style: RotaryStyle = "dark";
-    public controllers: (ILcdControllerConfigs | IMessageControllerConfigs)[];
+    public logo?: string;
+    // public controllers: (ILcdControllerConfigs | IMessageControllerConfigs)[];
+    public controllers: {
+        lcds: ILcdControllerConfigs[];
+        toggles: IMessageControllerConfigs[];
+        rotaries: IMessageControllerConfigs[];
+    };
+
+    readonly originalConfigs: IDeviceConfig;
 
     public constructor(config: IDeviceConfig) {
+        this.originalConfigs = config;
+
         this.id = config.id;
         this.key = config.id + new Date().getTime().toString();
         this.channel = config.channel;
@@ -25,13 +35,36 @@ export class Outboard implements IDeviceConfig {
         this.borderColor = config.borderColor;
         this.borderSize = config.borderSize;
         this.stock = config.stock;
+        this.logo = config.logo;
+        this.controllers = config.controllers;
         if (config.category) this.category = config.category;
         if (config.hasMultiSelection) this.hasMultiSelection = config.hasMultiSelection;
         if (config.style) this.style = config.style;
-        this.controllers = config.controllers.map((controller) => Outboard.createController(controller));
+        // {
+        //     lcds: config.controllers.lcds.map((controller) => Outboard.createController(controller)),
+        //     toggles: config.controllers.toggles.map((controller) => Outboard.createController(controller)),
+        //     rotaries: config.controllers.rotaries.map((controller) => Outboard.createController(controller)),
+        // };
     }
 
-    private static createController(controller: IControllerConfigs) {
-        return controller;
+    // private static createController(controller: IControllerConfigs) {
+    //     return controller;
+    // }
+
+    public getDeviceConfigs(): IDeviceConfig {
+        return {
+            id: this.id,
+            channel: this.channel,
+            label: this.label,
+            backgroundColor: this.backgroundColor,
+            panelColor: this.panelColor,
+            borderColor: this.borderColor,
+            borderSize: this.borderSize,
+            hasMultiSelection: this.hasMultiSelection,
+            controllers: this.controllers,
+            style: this.style,
+            stock: this.stock,
+            category: this.category,
+        };
     }
 }

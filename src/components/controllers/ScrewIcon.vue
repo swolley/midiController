@@ -1,28 +1,36 @@
 <script lang="ts" setup>
 import { computed, ref } from "vue";
+import { getOffset } from "./../../services/classes/Utils";
 
 const screw = ref<HTMLElement>();
 const rotate = ref<number>(Math.round(Math.random() * 360));
 const style = computed(() => `${rotate.value}deg`);
 const translate = Math.random() * 2 * (Math.random() ? 1 : -1);
 let startY = 0;
+let direction = 0;
+let lastStartY = 0;
 
 function onMouseDown(e: MouseEvent) {
     startY = e.pageY;
+    direction = screw.value && e.pageX > getOffset(screw.value || null).left ? -1 : 1;
     document.addEventListener("mouseup", onMouseUp);
     document.addEventListener("mousemove", onMouseMove);
 }
+
 function onMouseUp() {
+    lastStartY = startY;
     document.removeEventListener("mouseup", onMouseUp);
     document.removeEventListener("mousemove", onMouseMove);
 }
+
 function onMouseMove(e: MouseEvent) {
     rotate.value = calculateDeg(e.pageY);
 }
+
 function calculateDeg(mouseY: number): number {
-    let diff = startY - mouseY;
+    let diff = (startY - lastStartY - mouseY * direction) % 360;
     if (diff < 0) diff = diff + 360;
-    return diff % 360;
+    return diff;
 }
 </script>
 

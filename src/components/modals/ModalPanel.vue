@@ -1,5 +1,21 @@
 <script setup lang="ts">
-defineProps<{ show: boolean }>();
+import { onMounted } from "vue";
+
+const props = defineProps<{ show: boolean; confirmClose?: boolean }>();
+
+const emit = defineEmits(["close"]);
+
+onMounted(() => {
+    document.addEventListener("keyup", handleClose);
+});
+
+function handleClose(e: Event) {
+    if (e.type !== "click" && e.type === "keyup" && (e as KeyboardEvent).key !== "Escape") return;
+    if (props.confirmClose ? confirm("Changes will be discarded. Do you want to continue?") : true) {
+        emit("close");
+        document.removeEventListener("keyup", handleClose);
+    }
+}
 </script>
 <template>
     <Transition name="modal">
@@ -21,7 +37,7 @@ defineProps<{ show: boolean }>();
                         <slot name="footer">
                             <button
                                 class="rounded border border-white/10 w-full p-2 shadow bg-white/10 hover:bg-white/20 text-white transition-colors"
-                                @click="$emit('close')"
+                                @click="handleClose"
                             >
                                 Ok
                             </button>

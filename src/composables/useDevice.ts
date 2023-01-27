@@ -2,22 +2,23 @@ import type { IDeviceConfig, ILcdControllerConfigs, IMessageControllerConfigs } 
 
 export function useDevice(device: IDeviceConfig) {
     let hasPatch = false;
-    const lcds: ILcdControllerConfigs[] = [];
-    const rotaries: IMessageControllerConfigs[] = [];
-    const toggles: IMessageControllerConfigs[] = [];
+    const lcds: ILcdControllerConfigs[] = device.controllers.lcds;
+    const rotaries: IMessageControllerConfigs[] = device.controllers.rotaries;
+    const toggles: IMessageControllerConfigs[] = device.controllers.toggles;
 
-    device.controllers.forEach((c) => {
-        if (c.message === "PC") {
+    for (const controller of device.controllers.lcds) {
+        if (controller.message === "programchange") {
             hasPatch = true;
-            lcds.push(c as ILcdControllerConfigs);
-        } else if (c.type === "LCD") {
+            break;
+            // lcds.push(c as ILcdControllerConfigs);
+        } /* else if (c.type === "LCD") {
             lcds.push(c as ILcdControllerConfigs);
         } else if (c.type === "TOGGLE") {
             toggles.push(c as IMessageControllerConfigs);
         } else {
             rotaries.push(c as IMessageControllerConfigs);
-        }
-    });
+        }*/
+    }
 
     return {
         hasPatch,

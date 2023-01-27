@@ -1,13 +1,16 @@
 <script lang="ts" setup>
 import { useColors } from "@/composables/useColors";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import CollapseButton from "../controllers/CollapseButton.vue";
 import ScrewIcon from "../controllers/ScrewIcon.vue";
+import DragIcon from "../icons/DragIcon.vue";
 
 export interface IDeviceProps {
     background: string;
     collapsable: boolean;
+    draggable?: boolean;
     collapsed: boolean;
+    selected?: boolean;
     display?: "vertical" | "horizontal";
     label?: string;
 }
@@ -16,21 +19,30 @@ const emit = defineEmits(["togglecollapse"]);
 const props = withDefaults(defineProps<IDeviceProps>(), { background: "#000000", display: "vertical" });
 
 const { background, isFgInverted } = useColors(props.background);
-const collapsed = ref<boolean>(false);
+const currentlyCollapsed = ref<boolean>(props.collapsed);
 const invert = ref<boolean>(isFgInverted);
 
 function toggleCollapsed() {
-    if (props.collapsable) collapsed.value = !collapsed.value;
+    if (props.collapsable) currentlyCollapsed.value = !currentlyCollapsed.value;
     emit("togglecollapse");
 }
+
+watch(
+    () => props.collapsed,
+    (newValue) => (currentlyCollapsed.value = newValue)
+);
 </script>
 
 <template>
     <!-- DEVICE -->
-    <div class="device" :class="{ collapsed: collapsed }" :style="{ 'background-color': background.toString() }">
+    <div
+        class="device"
+        :class="{ collapsed: currentlyCollapsed }"
+        :style="{ 'background-color': background.toString(), 'box-shadow': selected ? '0px 10px 12px 6px' : '0px 1px 4px' }"
+    >
         <div class="px-2 flex flex-col items-center" :class="collapsed ? 'justify-center' : 'justify-between'">
             <ScrewIcon />
-            <span class="column-drag-handle opacity-20 hover:opacity-30 transtition-opacity cursor-pointer active:cursor-move">&#x2630;</span>
+            <DragIcon v-if="draggable" :class="{ invert }" />
             <ScrewIcon v-show="!collapsed" />
         </div>
         <div class="flex grow relative px-2" :class="display === 'vertical' ? 'flex-col' : 'flex-row'">
@@ -62,7 +74,7 @@ function toggleCollapsed() {
         </div>
         <div class="px-2 flex flex-col items-center" :class="collapsed ? 'justify-center' : 'justify-between'">
             <ScrewIcon />
-            <span class="column-drag-handle opacity-20 hover:opacity-30 transtition-opacity cursor-pointer active:cursor-move">&#x2630;</span>
+            <DragIcon v-if="draggable" :class="{ invert }" />
             <ScrewIcon v-show="!collapsed" />
         </div>
     </div>
@@ -71,7 +83,7 @@ function toggleCollapsed() {
 <style scoped lang="scss">
 .device {
     @apply rounded-sm my-1 mx-0.5 py-2 overflow-hidden select-none flex;
-    box-shadow: 0px 1px 4px;
+    // box-shadow: 0px 1px 4px;
     background-image: url(/metal.jpg);
     background-blend-mode: soft-light;
     min-height: 135px;

@@ -8,22 +8,27 @@ export type ChannelRange = Range<1, 17>;
 
 export interface IDeviceConfig {
     id: string;
-    channel: ChannelRange;
+    // channel: ChannelRange;
     label: string;
     backgroundColor: string;
     panelColor?: string;
     borderColor?: string;
     borderSize?: number;
-    hasMultiSelection?: boolean;
-    controllers: (ILcdControllerConfigs | IMessageControllerConfigs)[];
     style?: RotaryStyle;
     stock: boolean;
     category?: string;
+    // controllers: (ILcdControllerConfigs | IMessageControllerConfigs)[];
+    controllers: {
+        lcds: ILcdControllerConfigs[];
+        toggles: IMessageControllerConfigs[];
+        rotaries: IMessageControllerConfigs[];
+    };
+    logo?: string;
 }
 
 export type ControllerType = "LCD" | "TOGGLE" | "ROTARY";
 
-export type MessageType = "CC" | "PC" | "NOTE_ON" | "NOTE_OFF" | "SYSEX";
+export type MessageType = "controlchange" | "programchange" | "noteon" | /*"noteoff" |*/ "sysex";
 
 export type RotaryStyle = "light" | "dark" | "metal";
 
@@ -37,6 +42,7 @@ interface IControllerConfigs {
     minValue?: number;
     maxValue?: number;
     value?: number;
+    group?: number;
 }
 
 export interface ILcdControllerConfigs extends IControllerConfigs {
@@ -48,7 +54,6 @@ export interface IMessageControllerConfigs extends IControllerConfigs {
     // default?: number; //NoteRange;
     minValue?: number; //NoteRange;
     maxValue?: number; //NoteRange;
-    group?: number;
     note: number; //NoteRange;
 }
 
@@ -77,4 +82,25 @@ export interface DragResult {
     removedIndex: number;
     element: Element;
     payload: unknown;
+}
+
+export interface IComunicatorInterface {
+    /**
+     * send midi message
+     * @param {string|object} outputIdx 	- midi message type
+     * @param {string} channel 				- message channel
+     * @param {string} messageType 			- midi message type
+     * @param {number} deviceIdx 			- midi interface index
+     * @param {number} note 				- message note
+     * @param {number} velocity 			- message velocity
+     * @param {number} selectedOutboardIdx 	- outboard index
+     */
+    public send(
+        output: Output | number,
+        channel: ChannelRange,
+        messageType: MessageType,
+        note: number,
+        velocity: number,
+        selectedOutboard: IDeviceConfig
+    ): boolean;
 }
