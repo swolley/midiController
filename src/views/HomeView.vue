@@ -31,6 +31,7 @@ const selectedDevice = ref<IDeviceConfig | undefined>(rackStore.rackDevices.leng
 const openSettings = ref<boolean>(false);
 const openEditor = ref<boolean>(false);
 const currentRemoveDeviceCb = ref<CallableFunction | null>(null);
+const currentlyDragging = ref<Outboard | null>(null);
 
 function toggleConsole() {
     showConsole.value = !showConsole.value;
@@ -51,7 +52,6 @@ function toggleCollapseAll(collapse: boolean) {
 }
 
 function onDrop(dropResult: DragResult, list: "store" | "rack") {
-    console.log(dropResult);
     if (dropResult.removedIndex !== null && dropResult.addedIndex === null) {
         rackStore.moveDevice(dropResult, list, list === "store" ? "rack" : "store");
     } else if (dropResult.removedIndex !== dropResult.addedIndex) {
@@ -99,6 +99,13 @@ function onDeviceClick(device: Outboard) {
     document.title = "App - " + device.label;
 }
 
+function startDragging(dragging: DragResult) {
+    currentlyDragging.value = dragging.payload as Outboard;
+}
+function stopDragging() {
+    currentlyDragging.value = null;
+}
+
 onMounted(() => {
     if (selectedDevice.value) document.title = "App - " + selectedDevice.value.label;
 });
@@ -130,13 +137,16 @@ onMounted(() => {
             <!-- rack -->
             <RackContainer :showConsole="showConsole">
                 <Container
+                    class="h-full"
+                    :get-child-payload="(index: number) => rackStore.rackDevices[index]"
                     drag-handle-selector=".column-drag-handle"
                     group-name="devices"
                     data-index="rack"
                     orientation="vertical"
                     v-if="rackStore.midi"
                     @drop="(dropResult: DragResult) => onDrop(dropResult, 'rack')"
-                    class="h-full"
+                    @drag-start="startDragging"
+                    @drag-end="stopDragging"
                 >
                     <!-- devices -->
                     <Draggable v-for="device in rackStore.rackDevices" :key="device.id">

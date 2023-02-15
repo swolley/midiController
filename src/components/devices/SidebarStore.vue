@@ -35,7 +35,14 @@ function onDrop(dropResult: DragResult) {
         <div class="rounded border-2 border-dashed flex items-center justify-center p-5 m-1 opacity-30 hover:opacity-70 transition-opacity cursor-pointer">
             <PlusIcon class="text-gray-100 text-xl" @click="$emit('createdevice')" />
         </div>
-        <Container group-name="devices" data-index="available" orientation="vertical" class="grow overflow-y-scroll" @drop="onDrop">
+        <Container
+            group-name="devices"
+            data-index="available"
+            orientation="vertical"
+            class="grow overflow-y-scroll"
+            :get-child-payload="(index: number) => rackDevices[index]"
+            @drop="onDrop"
+        >
             <template v-for="device in availableDevices" :key="device.id">
                 <!-- <label v-if="checkGroup(device.category)" class="text-gray-600 p-2 select-none">{{ device.category || "Uncategorized" }}</label> -->
                 <Draggable class="relative last:mb-2">

@@ -33,6 +33,8 @@ const lightStatus = ref<LedStatus>("off");
 const midiChannels = Array.from(Array(16).keys(), (n) => n + 1);
 const selectedInterface = ref<number>(0);
 
+const patchSelector = ref<ILcdControllerConfigs | undefined>(props.device.controllers.lcds.find((lcd) => lcd.message === "programchange"));
+
 const lastNote = ref<number | undefined>();
 const lastValue = ref<string | undefined>();
 
@@ -152,18 +154,17 @@ watch(
         </template>
 
         <div class="flex justify-between grow mt-2 gap-3">
-            <div class="flex flex-col xl:flex-row gap-1 items-center justify-end xl:w-42">
-                <LcdSwitch
-                    v-for="(lcd, idx) in lcds"
-                    :key="idx"
-                    :controller="lcd"
-                    :invert="outPanel.isFgInverted"
-                    @changevalue="(value) => dispatchPCMessage(lcd, value)"
-                />
+            <div class="flex flex-col xl:flex-row gap-1 items-center justify-start xl:w-42">
                 <LcdDisplay :invert="outPanel.isFgInverted" label="value" :value="lastValue" :note="lastNote" />
+                <LcdSwitch
+                    v-if="patchSelector"
+                    :controller="patchSelector"
+                    :invert="outPanel.isFgInverted"
+                    @changevalue="(value) => dispatchPCMessage(patchSelector as ILcdControllerConfigs, value)"
+                />
             </div>
             <div
-                class="flex flex-col xl:flex-row py-2 px-3 rounded-lg gap-2 items-start lg:items-center justify-center mx-5"
+                class="flex flex-col xl:flex-row py-2 px-3 rounded-lg gap-2 items-start lg:items-center justify-center mx-5 grow"
                 :class="{ 'shadow-md': device.borderSize || (device.panelColor && device.panelColor !== 'transparent') }"
                 :style="{
                     'background-color': device.panelColor || 'transparent',
@@ -172,8 +173,18 @@ watch(
                     'border-style': 'solid',
                 }"
             >
-                <div class="hidden 2xl:flex 2xl:shrink items-center mr-4">
+                <div class="hidden 2xl:flex 2xl:shrink items-center mr-4 grow">
                     <img v-if="device.logo" :src="device.logo" class="opacity-95 device-logo max-w-[160px] max-h-[68px]" />
+                </div>
+                <div class="grid gap-2 grid-flow-col" v-if="lcds.length > 0 || (patchSelector && lcds.length > 1)">
+                    <template v-for="(lcd, idx) in lcds" :key="idx">
+                        <LcdSwitch
+                            v-if="lcd !== patchSelector"
+                            :controller="lcd"
+                            :invert="outPanel.isFgInverted"
+                            @changevalue="(value) => dispatchPCMessage(patchSelector as ILcdControllerConfigs, value)"
+                        />
+                    </template>
                 </div>
                 <div class="grid gap-2 grid-flow-col" v-if="toggles.length">
                     <ToggleButton
@@ -186,7 +197,7 @@ watch(
                         :data-controller="toggle.label"
                     />
                 </div>
-                <div class="grid gap-3 grid-cols-6 md:grid-flow-col" v-if="rotaries.length">
+                <div class="grid gap-3 grid-flow-col" v-if="rotaries.length">
                     <RotaryButton
                         class="w-16"
                         v-for="(rotary, idx) in rotaries"

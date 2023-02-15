@@ -3,7 +3,7 @@ import type { ChannelRange, ILcdControllerConfigs, IMessageControllerConfigs, ID
 export class Outboard implements IDeviceConfig {
     public id: string;
     readonly key: string;
-    public channel: ChannelRange;
+    public _channel: ChannelRange = 1;
     public label: string;
     public backgroundColor: string;
     public panelColor?: string = "transparent";
@@ -28,7 +28,6 @@ export class Outboard implements IDeviceConfig {
 
         this.id = config.id;
         this.key = config.id + new Date().getTime().toString();
-        this.channel = config.channel;
         this.label = config.label;
         this.backgroundColor = config.backgroundColor;
         this.panelColor = config.panelColor;
@@ -38,13 +37,21 @@ export class Outboard implements IDeviceConfig {
         this.logo = config.logo;
         this.controllers = config.controllers;
         if (config.category) this.category = config.category;
-        if (config.hasMultiSelection) this.hasMultiSelection = config.hasMultiSelection;
+        // if (config.hasMultiSelection) this.hasMultiSelection = config.hasMultiSelection;
         if (config.style) this.style = config.style;
         // {
         //     lcds: config.controllers.lcds.map((controller) => Outboard.createController(controller)),
         //     toggles: config.controllers.toggles.map((controller) => Outboard.createController(controller)),
         //     rotaries: config.controllers.rotaries.map((controller) => Outboard.createController(controller)),
         // };
+    }
+
+    get channel(): ChannelRange {
+        return this._channel;
+    }
+
+    set channel(channel: ChannelRange) {
+        this._channel = channel;
     }
 
     // private static createController(controller: IControllerConfigs) {
@@ -54,13 +61,13 @@ export class Outboard implements IDeviceConfig {
     public getDeviceConfigs(): IDeviceConfig {
         return {
             id: this.id,
-            channel: this.channel,
+            // channel: this.channel,
             label: this.label,
             backgroundColor: this.backgroundColor,
             panelColor: this.panelColor,
             borderColor: this.borderColor,
             borderSize: this.borderSize,
-            hasMultiSelection: this.hasMultiSelection,
+            // hasMultiSelection: this.hasMultiSelection,
             controllers: this.controllers,
             style: this.style,
             stock: this.stock,
