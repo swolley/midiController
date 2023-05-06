@@ -1,18 +1,10 @@
 import Color from "@/services/classes/Color";
 
-export function useColors(bgColor: string, lightColor = "#ffffff", darkColor = "#000000") {
-    const background = validateBgColor();
+export function useColors(background: Color, lightColor = "#ffffff", darkColor = "#000000") {
     const validLightColor = validateLightColor();
     const validDarkColor = validateDarkColor();
     const foreground = getFgFromBgColor();
     const isFgInverted = foreground.toHex().substring(0, 7) === validLightColor.toHex().substring(0, 7);
-
-    function validateBgColor() {
-        if (bgColor === "transparent") return new Color(0, 0, 0, 0);
-        if (bgColor[0] !== "#") bgColor = "#" + bgColor;
-        if (bgColor.length === 4) bgColor += bgColor.substring(1);
-        return Color.createFromHex(bgColor);
-    }
 
     function validateLightColor() {
         if (lightColor === "transparent") return new Color(0, 0, 0, 0);

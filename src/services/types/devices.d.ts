@@ -1,3 +1,5 @@
+import type { Outboard } from "@/services/classes/Outboard";
+
 type PrependNextNum<A extends Array<unknown>> = A["length"] extends infer T ? (((t: T, ...a: A) => void) extends (...x: infer X) => void ? X : never) : never;
 type EnumerateInternal<A extends Array<unknown>, N extends number> = { 0: A; 1: EnumerateInternal<PrependNextNum<A>, N> }[N extends A["length"] ? 0 : 1];
 type Enumerate<N extends number> = EnumerateInternal<[], N> extends (infer E)[] ? E : never;
@@ -6,23 +8,23 @@ type Range<FROM extends number, TO extends number> = Exclude<Enumerate<TO>, Enum
 export type ChannelRange = Range<1, 17>;
 // type NoteRange = Range<0, 128>;
 
+export interface IDeviceControllers {
+    lcds: ILcdControllerConfigs[];
+    toggles: IMessageControllerConfigs[];
+    rotaries: IMessageControllerConfigs[];
+}
+
 export interface IDeviceConfig {
     id: string;
-    // channel: ChannelRange;
     label: string;
-    backgroundColor: string;
-    panelColor?: string;
-    borderColor?: string;
+    backgroundColor: string | Color;
+    panelColor?: string | Color;
+    borderColor?: string | Color;
     borderSize?: number;
     style?: RotaryStyle;
     stock: boolean;
     category?: string;
-    // controllers: (ILcdControllerConfigs | IMessageControllerConfigs)[];
-    controllers: {
-        lcds: ILcdControllerConfigs[];
-        toggles: IMessageControllerConfigs[];
-        rotaries: IMessageControllerConfigs[];
-    };
+    controllers: IDeviceControllers;
     logo?: string;
 }
 
@@ -33,7 +35,6 @@ export type MessageType = "controlchange" | "programchange" | "noteon" | /*"note
 export type RotaryStyle = "light" | "dark" | "metal";
 
 interface IControllerConfigs {
-    // name: string;
     note?: number; //NoteRange;
     type: ControllerType;
     label: string;
@@ -46,12 +47,11 @@ interface IControllerConfigs {
 }
 
 export interface ILcdControllerConfigs extends IControllerConfigs {
-    type: ControllerType.LCD;
+    type: "LCD";
 }
 
 export interface IMessageControllerConfigs extends IControllerConfigs {
-    type: ControllerType.TOGGLE | ControllerType.ROTARY;
-    // default?: number; //NoteRange;
+    type: "TOGGLE" | "ROTARY";
     minValue?: number; //NoteRange;
     maxValue?: number; //NoteRange;
     note: number; //NoteRange;
@@ -78,10 +78,19 @@ export type ToggleStatus = "on" | "off";
 export type LedStatus = LogType | ToggleStatus;
 
 export interface DragResult {
+    payload: unknown;
+    isSource: boolean;
+    willAcceptDrop: boolean;
+}
+
+export interface DropResult {
     addedIndex: number;
     removedIndex: number;
     element: Element;
-    payload: unknown;
+    payload: {
+        group: string;
+        device: Outboard;
+    };
 }
 
 export interface IComunicatorInterface {

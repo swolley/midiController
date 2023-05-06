@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { useColors } from "@/composables/useColors";
 import { computed, ref } from "vue";
-import type { IDeviceConfig } from "@/services/types/devices";
-import RotaryIcon from "../icons/RotaryIcon.vue";
+import RotaryIcon from "@/components/icons/RotaryIcon.vue";
+import type { Outboard } from "@/services/classes/Outboard";
 
 const props = defineProps<{
-    device: IDeviceConfig;
+    device: Outboard;
     showPots: boolean;
 }>();
 

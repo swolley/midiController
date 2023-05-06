@@ -1,5 +1,5 @@
 import type { Input, Output } from "webmidi";
-import type { ChannelRange } from "../types/devices";
+import type { ChannelRange } from "@/services/types/devices";
 
 export default abstract class AbstractComunicator {
     protected _inputs: Input[] = [];

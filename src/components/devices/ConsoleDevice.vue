@@ -2,8 +2,9 @@
 import DeviceContainer from "./DeviceContainer.vue";
 import type { LedStatus, IConsoleLog } from "@/services/types/devices";
 import { ref, watch } from "vue";
-import LightLed from "../controllers/LightLed.vue";
+import LightLed from "@/components/controllers/LightLed.vue";
 import type RackConsole from "@/services/classes/RackConsole";
+import Color from "@/services/classes/Color";
 
 const props = defineProps<{
     collapsable: boolean;
@@ -15,6 +16,7 @@ const logs = ref<IConsoleLog[]>(props.console.logs);
 const ledStatus = ref<LedStatus>("off");
 let blinkTimeout: number | null = null;
 const currentlyCollapsed = ref<boolean>(props.collapsed);
+const consoleColor = Color.createFromHex("050505");
 
 watch(logs, (value: IConsoleLog[]) => {
     if (!value.length) return;
@@ -28,7 +30,7 @@ watch(logs, (value: IConsoleLog[]) => {
     <DeviceContainer
         class="console-device"
         :class="{ full: !currentlyCollapsed }"
-        background="#050505"
+        :background="consoleColor"
         :collapsable="collapsable"
         :collapsed="currentlyCollapsed"
         display="horizontal"

@@ -1,9 +1,9 @@
 <script lang="ts" setup>
-import AngleDownIcon from "../icons/AngleDownIcon.vue";
-import AngleUpIcon from "../icons/AngleUpIcon.vue";
-import ConsoleIcon from "../icons/ConsoleIcon.vue";
-import BookIcon from "../icons/BookIcon.vue";
-import SlidersIcon from "../icons/SlidersIcon.vue";
+import AngleDownIcon from "@/components/icons/AngleDownIcon.vue";
+import AngleUpIcon from "@/components/icons/AngleUpIcon.vue";
+import ConsoleIcon from "@/components/icons/ConsoleIcon.vue";
+import BookIcon from "@/components/icons/BookIcon.vue";
+import SlidersIcon from "@/components/icons/SlidersIcon.vue";
 
 const emit = defineEmits(["togglecollapseall", "openeditor", "toggleconsole", "togglestore", "togglesettings"]);
 
@@ -15,22 +15,22 @@ function toggleCollapseAll(collapse: boolean) {
 <template>
     <nav class="flex justify-between gap-2">
         <div class="flex gap-2">
-            <button class="btn btn-outline h-8 xl:h-7 aspect-square invert" title="Open Settings">
-                <BookIcon @click="$emit('togglestore')" />
+            <button class="btn btn-outline h-8 xl:h-7 aspect-square invert" title="Open Settings" @click="$emit('togglestore')">
+                <BookIcon />
             </button>
-            <button class="btn btn-outline h-8 xl:h-7 aspect-square invert" title="Open Settings">
-                <SlidersIcon @click="$emit('togglesettings')" />
+            <button class="btn btn-outline h-8 xl:h-7 aspect-square invert" title="Open Settings" @click="$emit('togglesettings')">
+                <SlidersIcon />
             </button>
         </div>
         <div class="flex gap-2">
-            <button class="btn btn-outline h-8 xl:h-7 aspect-square invert" title="Collapse all">
-                <AngleUpIcon @click="() => toggleCollapseAll(true)" />
+            <button class="btn btn-outline h-8 xl:h-7 aspect-square invert" title="Collapse all" @click="() => toggleCollapseAll(true)">
+                <AngleUpIcon />
             </button>
-            <button class="btn btn-outline h-8 xl:h-7 aspect-square invert" title="Expand all">
-                <AngleDownIcon @click="() => toggleCollapseAll(false)" />
+            <button class="btn btn-outline h-8 xl:h-7 aspect-square invert" title="Expand all" @click="() => toggleCollapseAll(false)">
+                <AngleDownIcon />
             </button>
-            <button class="btn btn-outline h-8 xl:h-7 aspect-square invert" title="Toggle Console">
-                <ConsoleIcon @click="$emit('toggleconsole')" />
+            <button class="btn btn-outline h-8 xl:h-7 aspect-square invert" title="Toggle Console" @click="$emit('toggleconsole')">
+                <ConsoleIcon />
             </button>
         </div>
     </nav>

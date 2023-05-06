@@ -1,22 +1,29 @@
 <script lang="ts" setup>
 import { useColors } from "@/composables/useColors";
-import { ref, watch } from "vue";
-import CollapseButton from "../controllers/CollapseButton.vue";
-import ScrewIcon from "../controllers/ScrewIcon.vue";
-import DragIcon from "../icons/DragIcon.vue";
-
-export interface IDeviceProps {
-    background: string;
-    collapsable: boolean;
-    draggable?: boolean;
-    collapsed: boolean;
-    selected?: boolean;
-    display?: "vertical" | "horizontal";
-    label?: string;
-}
+import { ref /*, watch*/ } from "vue";
+import CollapseButton from "@/components/controllers/CollapseButton.vue";
+import ScrewIcon from "@/components/controllers/ScrewIcon.vue";
+import DragIcon from "@/components/icons/DragIcon.vue";
+import type Color from "@/services/classes/Color";
 
 const emit = defineEmits(["togglecollapse"]);
-const props = withDefaults(defineProps<IDeviceProps>(), { background: "#000000", display: "vertical" });
+const props = withDefaults(
+    defineProps<{
+        background: Color;
+        collapsable: boolean;
+        collapsed: boolean;
+        draggable?: boolean;
+        selected?: boolean;
+        display?: "vertical" | "horizontal";
+        label?: string;
+    }>(),
+    {
+        // background: new Color(0, 0, 0),
+        display: "vertical",
+        draggable: false,
+        selected: false,
+    }
+);
 
 const { background, isFgInverted } = useColors(props.background);
 const currentlyCollapsed = ref<boolean>(props.collapsed);
@@ -27,10 +34,10 @@ function toggleCollapsed() {
     emit("togglecollapse");
 }
 
-watch(
-    () => props.collapsed,
-    (newValue) => (currentlyCollapsed.value = newValue)
-);
+// watch(
+//     () => props.collapsed,
+//     (newValue) => (currentlyCollapsed.value = newValue)
+// );
 </script>
 
 <template>
@@ -46,13 +53,6 @@ watch(
             <ScrewIcon v-show="!collapsed" />
         </div>
         <div class="flex grow relative px-2" :class="display === 'vertical' ? 'flex-col' : 'flex-row'">
-            <label
-                v-if="label"
-                class="absolute mix-blend-soft-light top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 transition-opacity whitespace-nowrap"
-                :class="[{ invert: invert }, collapsed ? 'opacity-20 text-3xl' : 'opacity-0  text-7xl']"
-            >
-                {{ label }}
-            </label>
             <div class="flex justify-between relative">
                 <CollapseButton
                     class="items-start"
@@ -63,9 +63,7 @@ watch(
                     title="Toggle collapse"
                 />
                 <!-- custom headers -->
-                <!-- <template v-if="!collapsed"> -->
                 <slot name="header"></slot>
-                <!-- </template> -->
             </div>
             <div class="flex grow relative h-full mx-auto w-full lg:w-11/12" v-show="!collapsed">
                 <!-- device controllers -->
@@ -86,7 +84,7 @@ watch(
     // box-shadow: 0px 1px 4px;
     background-image: url(/metal.jpg);
     background-blend-mode: soft-light;
-    min-height: 135px;
+    min-height: 151px;
 
     &:not(.collapsed):hover label {
         @apply opacity-10;

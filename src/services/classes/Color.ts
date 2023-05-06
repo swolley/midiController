@@ -1,3 +1,7 @@
+import { Listener, MyObjectListener, sealed } from "@/services/types/decorators";
+
+@sealed
+@Listener(new MyObjectListener())
 export default class Color {
     private _r: number;
     private _g: number;

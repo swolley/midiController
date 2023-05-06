@@ -1,6 +1,7 @@
 import { Enumerations } from "webmidi";
-import type { ChannelRange, IComunicatorInterface, IDeviceConfig, MessageType } from "../types/devices";
-import AbstractComunicator from "./AbstractComunicator";
+import type { ChannelRange, IComunicatorInterface, IDeviceConfig, MessageType } from "@/services/types/devices";
+import AbstractComunicator from "@/services/classes/AbstractComunicator";
+import type HttpOutput from "@/services/classes/HttpOutput";
 
 export class Http extends AbstractComunicator implements IComunicatorInterface {
     public send(output: HttpOutput | number, channel: ChannelRange, messageType: MessageType, note: number, velocity: number, selectedOutboard: IDeviceConfig) {
@@ -12,11 +13,11 @@ export class Http extends AbstractComunicator implements IComunicatorInterface {
             switch (messageType) {
                 case "controlchange":
                     output.sendControlChange(note, velocity, { channels: channel });
-                    messageTypeNumber = Enumerations.MIDI_CHANNEL_MESSAGES.controlchange;
+                    messageTypeNumber = Enumerations.CHANNEL_MESSAGES.controlchange;
                     break;
                 case "programchange":
                     output.sendProgramChange(note, { channels: channel });
-                    messageTypeNumber = Enumerations.MIDI_CHANNEL_MESSAGES.programchange;
+                    messageTypeNumber = Enumerations.CHANNEL_MESSAGES.programchange;
                     break;
                 default:
                     throw new Error(`MessageType ${messageType} not handled`);

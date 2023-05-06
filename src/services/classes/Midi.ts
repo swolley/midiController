@@ -1,7 +1,11 @@
 import { Enumerations, Input, InputChannel, Output, WebMidi } from "webmidi";
-import type { ChannelRange, IComunicatorInterface, IDeviceConfig, MessageType } from "../types/devices";
-import AbstractComunicator from "./AbstractComunicator";
+import type { ChannelRange, IComunicatorInterface, MessageType } from "@/services/types/devices";
+import AbstractComunicator from "@/services/classes/AbstractComunicator";
+import type { Outboard } from "@/services/classes/Outboard";
+import { Listener, MyObjectListener, sealed } from "@/services/types/decorators";
 
+@sealed
+@Listener(new MyObjectListener())
 export class Midi extends AbstractComunicator implements IComunicatorInterface {
     public static async init(disabled?: string[]): Promise<Midi | undefined> {
         try {
@@ -33,14 +37,7 @@ export class Midi extends AbstractComunicator implements IComunicatorInterface {
         return WebMidi.interface.sysexEnabled;
     }
 
-    public send(
-        output: Output | number,
-        channel: ChannelRange,
-        messageType: MessageType,
-        note: number,
-        velocity: number,
-        selectedOutboard: IDeviceConfig
-    ): boolean {
+    public send(output: Output | number, channel: ChannelRange, messageType: MessageType, note: number, velocity: number, selectedOutboard: Outboard): boolean {
         if (typeof output === "number") output = this._outputs[output];
 
         let messageTypeNumber: number | null = null;
@@ -48,11 +45,11 @@ export class Midi extends AbstractComunicator implements IComunicatorInterface {
             switch (messageType) {
                 case "controlchange":
                     output.sendControlChange(note, velocity, { channels: channel });
-                    messageTypeNumber = Enumerations.MIDI_CHANNEL_MESSAGES.controlchange;
+                    messageTypeNumber = Enumerations.CHANNEL_MESSAGES.controlchange;
                     break;
                 case "programchange":
                     output.sendProgramChange(note, { channels: channel });
-                    messageTypeNumber = Enumerations.MIDI_CHANNEL_MESSAGES.programchange;
+                    messageTypeNumber = Enumerations.CHANNEL_MESSAGES.programchange;
                     break;
                 default:
                     throw new Error(`MessageType ${messageType} not handled`);

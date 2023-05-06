@@ -1,11 +1,12 @@
-import { IEditor, IConsole, type IDeviceConfig } from "./devices";
-import type { Midi } from "../classes/Midi";
-import type { Http } from "../classes/Http";
-import type { Outboard } from "../classes/Outboard";
+import { IEditor, IConsole } from "@/services/types/devices";
+import type { Midi } from "@/services/classes/Midi";
+import type { Http } from "@/services/classes/Http";
+import type { Outboard } from "@/services/classes/Outboard";
 
+export type CategorizedDeviceList = Record<string, Outboard[]>;
 export interface IAppStoreProps {
     rackDevices: Outboard[];
-    availableDevices: IDeviceConfig[];
+    availableDevices: CategorizedDeviceList;
     // inputs: WebMidi.inputs;
     // outputs: WebMidi.outputs;
     midi?: Midi;

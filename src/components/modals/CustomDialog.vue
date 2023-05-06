@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // import { useApp } from "@/stores/useApp";
 import ModalPanel from "./ModalPanel.vue";
-import IconClose from "../icons/CancelIcon.vue";
+import IconClose from "@/components/icons/CancelIcon.vue";
 
 export interface IDialogButton {
     label: string;

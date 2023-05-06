@@ -4,7 +4,7 @@ const configs: IDeviceConfig[] = [
     {
         id: "fishanha",
         label: "Rock Fishanha",
-        backgroundColor: "#ce4d5f",
+        backgroundColor: "#d14458",
         panelColor: "transparent",
         borderColor: "transparent",
         stock: true,
@@ -98,7 +98,7 @@ const configs: IDeviceConfig[] = [
     {
         id: "jump",
         label: "Jump-One",
-        backgroundColor: "#d6bd7d",
+        backgroundColor: "#e9c66b",
         panelColor: "#111111",
         borderColor: "transparent",
         stock: true,

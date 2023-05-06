@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { useRack } from "@/stores/useRack";
-import PlusIconVue from "../icons/PlusIcon.vue";
-import TrashIcon from "../icons/TrashIcon.vue";
+import PlusIconVue from "@/components/icons/PlusIcon.vue";
+import TrashIcon from "@/components/icons/TrashIcon.vue";
+
+const emit = defineEmits(["forceclose"]);
 
 const rackStore = useRack();
-await rackStore.init();
 
 function toggleActiveMidi(id: string) {
     if (!rackStore.midi) return;
@@ -30,6 +31,7 @@ function handleResetAll() {
     if (confirm("Would you like to reset all settings?")) {
         rackStore.$reset();
         rackStore.init();
+        emit("forceclose");
         // openSettings.value = false;
     }
 }
