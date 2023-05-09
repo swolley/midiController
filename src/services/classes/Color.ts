@@ -1,7 +1,7 @@
-import { Listener, MyObjectListener, sealed } from "@/services/types/decorators";
+// import { Listener, MyObjectListener, sealed } from "@/services/types/decorators";
 
-@sealed
-@Listener(new MyObjectListener())
+// @sealed
+// @Listener(new MyObjectListener())
 export default class Color {
     private _r: number;
     private _g: number;
@@ -67,7 +67,7 @@ export default class Color {
     public static createFromHex(hex: string): Color {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})?$/i.exec(hex);
         if (!result) throw new Error(`${hex} is not a valid hex value`);
-        return new Color(parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16));
+        return new Color(parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16), result[4] ? parseInt(result[4], 16) : 100);
     }
 
     public static isValidHex(hex: string): boolean {
@@ -88,11 +88,15 @@ export default class Color {
             Color.componentToHex(this._r) +
             Color.componentToHex(this._g) +
             Color.componentToHex(this._b) +
-            (this._a ? Color.componentToHex((this._a / 100) * 255) : "")
+            (this._a ? Color.componentToHex((this._a / 100) * 255) : "00")
         );
     }
 
     public toString() {
         return this.toRgb();
+    }
+
+    public toJSON() {
+        return this.toHex();
     }
 }

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useColors } from "@/composables/useColors";
-import { ref /*, watch*/ } from "vue";
+import { ref } from "vue";
 import CollapseButton from "@/components/controllers/CollapseButton.vue";
 import ScrewIcon from "@/components/controllers/ScrewIcon.vue";
 import DragIcon from "@/components/icons/DragIcon.vue";
@@ -18,7 +18,6 @@ const props = withDefaults(
         label?: string;
     }>(),
     {
-        // background: new Color(0, 0, 0),
         display: "vertical",
         draggable: false,
         selected: false,
@@ -33,11 +32,6 @@ function toggleCollapsed() {
     if (props.collapsable) currentlyCollapsed.value = !currentlyCollapsed.value;
     emit("togglecollapse");
 }
-
-// watch(
-//     () => props.collapsed,
-//     (newValue) => (currentlyCollapsed.value = newValue)
-// );
 </script>
 
 <template>
@@ -49,7 +43,7 @@ function toggleCollapsed() {
     >
         <div class="px-2 flex flex-col items-center" :class="collapsed ? 'justify-center' : 'justify-between'">
             <ScrewIcon />
-            <DragIcon v-if="draggable" :class="{ invert }" />
+            <DragIcon v-if="draggable" :class="[{ invert }, 'column-drag-handle']" />
             <ScrewIcon v-show="!collapsed" />
         </div>
         <div class="flex grow relative px-2" :class="display === 'vertical' ? 'flex-col' : 'flex-row'">
@@ -72,7 +66,7 @@ function toggleCollapsed() {
         </div>
         <div class="px-2 flex flex-col items-center" :class="collapsed ? 'justify-center' : 'justify-between'">
             <ScrewIcon />
-            <DragIcon v-if="draggable" :class="{ invert }" />
+            <DragIcon v-if="draggable" :class="[{ invert }, 'column-drag-handle']" />
             <ScrewIcon v-show="!collapsed" />
         </div>
     </div>

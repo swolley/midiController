@@ -2,7 +2,7 @@
 import DeviceContainer from "./DeviceContainer.vue";
 import type { IMessageControllerConfigs, ILcdControllerConfigs, LedStatus } from "@/services/types/devices";
 import { useColors } from "@/composables/useColors";
-import { onMounted, ref, watch } from "vue";
+import { ref } from "vue";
 import { useDevice } from "@/composables/useDevice";
 // import UploadIcon from "../icons/UploadIcon.vue";
 // import DownloadIcon from "../icons/DownloadIcon.vue";
@@ -24,15 +24,14 @@ const props = defineProps<{
     selected: boolean;
     device: Outboard;
     isSelected: boolean;
-    initCompleted: boolean;
     draggable?: boolean;
     midi: Midi;
 }>();
 
-const { /*hasPatch,*/ lcds, rotaries, toggles } = useDevice(props.device);
+const { lcds, rotaries, toggles } = useDevice(props.device);
 const deviceStore = useRack();
 const outPanel = useColors(props.device.backgroundColor);
-const overPanel = useColors(props.device.panelColor || props.device.backgroundColor);
+const overPanel = useColors(!props.device.panelColor.isTransparent() ? props.device.panelColor : props.device.backgroundColor);
 const lightStatus = ref<LedStatus>("off");
 const midiChannels = Array.from(Array(16).keys(), (n) => n + 1);
 const selectedInterface = ref<number>(0);
@@ -98,25 +97,6 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
         handleBlink(sent);
     }
 }
-
-let awaitingInit: number | null = null;
-const stepCharacters = ["  _", " _ ", "_  "];
-let awaitingStep = Math.floor(Math.random() * stepCharacters.length);
-
-onMounted(() => {
-    if (!props.initCompleted)
-        awaitingInit = setInterval(() => {
-            lastValue.value = stepCharacters[awaitingStep];
-            awaitingStep = (awaitingStep + 1) % 3;
-        }, 250);
-});
-
-watch(
-    () => props.initCompleted,
-    (newValue, oldValue) => {
-        if (awaitingInit && !oldValue && newValue) clearInterval(awaitingInit);
-    }
-);
 </script>
 
 <template>
@@ -135,10 +115,10 @@ watch(
             <div class="flex items-center gap-2" :class="!isSelected ? 'opacity-40 pointer-events-none' : ''">
                 <LightLed :status="lightStatus" class="mr-2" />
                 <button v-if="!device.stock" class="btn btn-outline h-6 aspect-square" :class="{ invert: outPanel.isFgInverted }" title="Open Device Settings">
-                    <PaletteIcon @click="$emit('openeditor', device)" />
+                    <PaletteIcon @click="$emit('openeditor')" />
                 </button>
                 <button class="btn btn-outline h-6 aspect-square" :class="{ invert: outPanel.isFgInverted }" title="Move back to Catalog">
-                    <TrashIcon @click="$emit('removedevice', device)" />
+                    <TrashIcon @click="$emit('removedevice')" />
                 </button>
                 <!-- <template v-if="midi.isSysexEnabled() && hasPatch">
                     <button class="btn btn-outline h-6 aspect-square" :class="{ invert: outPanel.isFgInverted }" title="Send Sysex message">

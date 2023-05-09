@@ -113,7 +113,6 @@ function setLabel(e: Event) {
                             name="backgroundColor"
                             class="bg-transparent grow cursor-pointer"
                             :value="device.backgroundColor"
-                            3
                             @change="setBackgroundColor"
                             required
                         />

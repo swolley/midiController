@@ -88,7 +88,7 @@ export interface DropResult {
     removedIndex: number;
     element: Element;
     payload: {
-        group: string;
+        list: string;
         device: Outboard;
     };
 }

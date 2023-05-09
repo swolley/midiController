@@ -1,13 +1,13 @@
 import type { ChannelRange, IDeviceConfig, RotaryStyle, IDeviceControllers, IControllerConfigs } from "@/services/types/devices";
 import { ObjectUtils, Validators } from "@/services/classes/Utils";
 import Color from "@/services/classes/Color";
-import { sealed, MyObjectListener, Listener } from "@/services/types/decorators";
+// import { sealed, MyObjectListener, Listener } from "@/services/types/decorators";
 import type { Output } from "webmidi";
 
 const notValidError = "Not a valid color";
 
-@sealed
-@Listener(new MyObjectListener())
+// @sealed
+// @Listener(new MyObjectListener())
 export class Outboard implements IDeviceConfig {
     private _id: string;
     private _label: string;
@@ -28,25 +28,24 @@ export class Outboard implements IDeviceConfig {
 
     public constructor(config: IDeviceConfig) {
         this.originalConfigs = Object.freeze(ObjectUtils.clone<IDeviceConfig>(config));
-
-        this._id = config.id;
-        this.key = config.id + new Date().getTime().toString();
-        this._label = config.label;
-        this._backgroundColor = Outboard.parseColor(config.backgroundColor);
-        this._panelColor = Outboard.parseColor(config.panelColor);
-        this._borderColor = Outboard.parseColor(config.borderColor);
-        if (config.borderSize) this._borderSize = config.borderSize;
-        this.stock = config.stock;
-        this._logo = config.logo;
-        for (const type in config.controllers) {
-            for (const controller of config.controllers[type as keyof IDeviceControllers]) {
+        this.key = this.originalConfigs.id + new Date().getTime().toString();
+        this._id = this.originalConfigs.id;
+        this._label = this.originalConfigs.label;
+        this._backgroundColor = Outboard.parseColor(this.originalConfigs.backgroundColor);
+        this._panelColor = Outboard.parseColor(this.originalConfigs.panelColor);
+        this._borderColor = Outboard.parseColor(this.originalConfigs.borderColor);
+        if (this.originalConfigs.borderSize) this._borderSize = this.originalConfigs.borderSize;
+        this.stock = this.originalConfigs.stock;
+        this._logo = this.originalConfigs.logo;
+        for (const type in this.originalConfigs.controllers) {
+            for (const controller of this.originalConfigs.controllers[type as keyof IDeviceControllers]) {
                 controller.minValue = controller.minValue || 1;
                 controller.minValue = controller.maxValue || 127;
             }
         }
-        this._controllers = config.controllers;
-        this._category = config.category || "uncategorized";
-        if (config.style) this._style = config.style;
+        this._controllers = this.originalConfigs.controllers;
+        this._category = this.originalConfigs.category || "uncategorized";
+        if (this.originalConfigs.style) this._style = this.originalConfigs.style;
         // if (config.hasMultiSelection) this.hasMultiSelection = config.hasMultiSelection;
         // {
         //     lcds: config.controllers.lcds.map((controller) => Outboard.createController(controller)),
@@ -213,4 +212,20 @@ export class Outboard implements IDeviceConfig {
     //         })
     //     ) as IDeviceConfig;
     // }
+
+    toJSON(): IDeviceConfig {
+        return {
+            id: this.id,
+            label: this.label,
+            backgroundColor: this.backgroundColor,
+            panelColor: this.panelColor.toHex(),
+            borderColor: this.borderColor.toHex(),
+            borderSize: this.borderSize,
+            style: this.style,
+            stock: this.stock,
+            category: this.category,
+            controllers: this.controllers,
+            logo: this.logo,
+        };
+    }
 }

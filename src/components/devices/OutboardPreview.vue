@@ -15,7 +15,7 @@ const potStyles = computed(() => props.device.style || "dark");
 </script>
 
 <template>
-    <div class="device flex flex-col rounded-sm my-1.5 mx-0.5 py-2 px-1 overflow-hidden select-none" :style="{ 'background-color': background.toString() }">
+    <div class="device" :style="{ 'background-color': background.toString() }">
         <div class="opacity-50 whitespace-nowrap text-center truncate" :class="{ invert: invert }">
             {{ device.label || device.id }}
         </div>
@@ -32,5 +32,6 @@ const potStyles = computed(() => props.device.style || "dark");
     box-shadow: 0px 1px 2px;
     background-image: url(/metal.jpg);
     background-blend-mode: soft-light;
+    @apply flex flex-col gap-2 rounded-sm my-1.5 mx-0.5 py-2 px-1 overflow-hidden select-none relative;
 }
 </style>

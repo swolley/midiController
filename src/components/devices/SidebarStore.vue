@@ -3,8 +3,8 @@ type SidebarDevices = Record<string, { opened: boolean; devices: Outboard[] }>;
 </script>
 
 <script setup lang="ts">
-import type { DragResult, DropResult } from "@/services/types/devices";
-import OutboardPreview from "@/components/editor/OutboardPreview.vue";
+import type { DropResult } from "@/services/types/devices";
+import OutboardPreview from "@/components/devices/OutboardPreview.vue";
 import { Container, Draggable } from "vue-dndrop";
 import TrashIcon from "../icons/TrashIcon.vue";
 import PlusIcon from "../icons/PlusIcon.vue";
@@ -16,8 +16,9 @@ import ConfirmDialog from "@/components/modals/ConfirmDialog.vue";
 import AngleDownIcon from "../icons/AngleDownIcon.vue";
 import AngleUpIcon from "../icons/AngleUpIcon.vue";
 import { StringUtils } from "@/services/classes/Utils";
+import type { CategorizedDeviceList } from "@/services/types/stores";
 
-const emit = defineEmits([/*"dragdevice",*/ "createdevice", "openeditor"]);
+defineEmits(["createdevice", "openeditor"]);
 defineProps<{
     show: boolean;
 }>();
@@ -36,13 +37,11 @@ if (keys.length === 1) remapped[keys[0]].opened = true;
 
 const groupedDevices = ref<SidebarDevices>(remapped);
 
-function onDrop(dropResult: DropResult) {
-    if (dropResult.addedIndex === null) {
-        // emit("dragdevice", dropResult);
-        console.log("cambio gruppo", dropResult.payload);
-        rackStore.moveDeviceToRack(dropResult.payload.device.category, dropResult.removedIndex, dropResult.addedIndex);
-    } else {
-        rackStore.reorderCategoryDevices(dropResult);
+function onDrop(dropResult: DropResult, toList: keyof CategorizedDeviceList) {
+    if (dropResult.payload.list !== "rack" && toList !== dropResult.payload.device.category) {
+        rackStore.moveDeviceToCategory(dropResult.payload.device, toList, dropResult.addedIndex);
+    } else if (dropResult.removedIndex !== undefined && dropResult.addedIndex !== undefined) {
+        rackStore.reorderCategoryDevices(dropResult.payload.device, dropResult.removedIndex, dropResult.addedIndex);
     }
 }
 
@@ -56,16 +55,17 @@ function askRemoveDevice(device: Outboard) {
 </script>
 
 <template>
-    <div class="sidebar" :class="[{ 'p-2': show }, show ? 'w-1/2 md:w-1/3 xl:w-1/5' : 'w-0 overflow-hidden']">
+    <!-- <div class="sidebar fixed md:static z-50 bg-black shadow-lg border" :class="[{ 'p-2': show }, show ? 'w-2/3 md:w-1/3 xl:w-1/5' : 'w-0 overflow-hidden']"></div> -->
+    <div class="sidebar" :class="[{ 'p-2': show }, show ? 'w-2/3 lg:w-1/4 xl:w-1/5' : 'w-0 overflow-hidden']">
         <div
             class="rounded border-2 border-dashed flex items-center justify-center p-5 m-1 mb-3 opacity-30 hover:opacity-70 transition-opacity cursor-pointer"
             @click="$emit('createdevice')"
         >
             <PlusIcon class="text-gray-100 text-xl" />
         </div>
-        <div v-for="(group, name) in groupedDevices" :key="name">
+        <div v-for="(group, name) in (groupedDevices as SidebarDevices)" :key="name">
             <div class="flex text-gray-500 items-center px-1 cursor-pointer" @click="group.opened = !group.opened">
-                <div class="grow select-none">{{ StringUtils.ucFirst(name) }}</div>
+                <div class="grow select-none">{{ StringUtils.ucFirst(name) }} ({{ groupedDevices[name].devices.length }})</div>
                 <AngleDownIcon v-if="group.opened" />
                 <AngleUpIcon v-else />
             </div>
@@ -74,10 +74,10 @@ function askRemoveDevice(device: Outboard) {
                     v-show="group.opened"
                     class="grow overflow-y-scroll relative"
                     group-name="devices"
-                    :data-group="name"
                     orientation="vertical"
-                    :get-child-payload="(index: number) => ({ group: name, device: group.devices[index] })"
-                    @drop="onDrop"
+                    :data-group="name"
+                    :get-child-payload="(index: number) => ({ list: name, device: group.devices[index] })"
+                    @drop="(drop: DropResult) => onDrop(drop, name)"
                 >
                     <template v-for="device in groupedDevices[name].devices" :key="device.id">
                         <!-- <label v-if="checkGroup(device.category)" class="text-gray-600 p-2 select-none">{{ device.category || "Uncategorized" }}</label> -->

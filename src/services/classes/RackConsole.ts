@@ -1,8 +1,8 @@
 import type { IConsoleLog, IConsole, LogType } from "@/services/types/devices";
-import { Listener, MyObjectListener, sealed } from "@/services/types/decorators";
+// import { Listener, MyObjectListener, sealed } from "@/services/types/decorators";
 
-@sealed
-@Listener(new MyObjectListener())
+// @sealed
+// @Listener(new MyObjectListener())
 export default class RackConsole implements IConsole {
     logs: IConsoleLog[] = [];
 

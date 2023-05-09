@@ -7,6 +7,10 @@ import SlidersIcon from "@/components/icons/SlidersIcon.vue";
 
 const emit = defineEmits(["togglecollapseall", "openeditor", "toggleconsole", "togglestore", "togglesettings"]);
 
+defineProps<{
+    showToggleConsole: boolean;
+}>();
+
 function toggleCollapseAll(collapse: boolean) {
     emit("togglecollapseall", collapse);
 }
@@ -29,7 +33,7 @@ function toggleCollapseAll(collapse: boolean) {
             <button class="btn btn-outline h-8 xl:h-7 aspect-square invert" title="Expand all" @click="() => toggleCollapseAll(false)">
                 <AngleDownIcon />
             </button>
-            <button class="btn btn-outline h-8 xl:h-7 aspect-square invert" title="Toggle Console" @click="$emit('toggleconsole')">
+            <button v-show="showToggleConsole" class="btn btn-outline h-8 xl:h-7 aspect-square invert" title="Toggle Console" @click="$emit('toggleconsole')">
                 <ConsoleIcon />
             </button>
         </div>

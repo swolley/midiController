@@ -3,25 +3,23 @@ import BoxContainer from "@/components/rack/BoxContainer.vue";
 import RackContainer from "@/components/rack/RackContainer.vue";
 import ConsoleDevice from "@/components/devices/ConsoleDevice.vue";
 import ToolBar from "@/components/toolbar/ToolBar.vue";
-import { /*onMounted,*/ ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRack } from "@/stores/useRack";
 import ModalPanel from "@/components/modals/ModalPanel.vue";
 import OutboardDevice from "@/components/devices/OutboardDevice.vue";
 import type { Midi } from "@/services/classes/Midi";
-import type { DragResult, DropResult } from "@/services/types/devices";
+import type { DropResult } from "@/services/types/devices";
 import { Container, Draggable } from "vue-dndrop";
 import SidebarStore from "@/components/devices/SidebarStore.vue";
 import DeviceEditor from "@/components/editor/DeviceEditor.vue";
 import type RackConsole from "@/services/classes/RackConsole";
 import AppConfig from "@/components/editor/AppConfig.vue";
 import type { Outboard } from "@/services/classes/Outboard";
+import { useWindowSize } from "@vueuse/core";
 
 const rackStore = useRack();
-// const initialized = ref<boolean>(false);
-// await rackStore
-//     .init()
-//     .then(() => (initialized.value = true))
-//     .catch(() => (initialized.value = false));
+const { width } = useWindowSize();
+const isDesktop = computed(() => width.value >= 1024);
 
 const showConsole = ref<boolean>(true);
 const collapseAll = ref<boolean>(false);
@@ -30,7 +28,6 @@ const selectedDevice = ref<Outboard | undefined>(rackStore.rackDevices.length ? 
 const modifiedDevice = ref<Outboard | undefined>();
 const openSettings = ref<boolean>(false);
 const openEditor = ref<boolean>(false);
-const currentlyDragging = ref<Outboard | null>(null);
 
 function cloneDevice(device: Outboard) {
     return JSON.parse(JSON.stringify(device)) as Outboard;
@@ -54,22 +51,16 @@ function saveAndCloseEditor() {
 }
 
 function toggleCollapseAll(collapse: boolean) {
-    // console.log("collapse all", collapse);
     collapseAll.value = collapse;
 }
 
-function onDrop(dropResult: DropResult, list: "store" | "rack") {
-    if (dropResult.removedIndex !== null && dropResult.addedIndex === null) {
-        rackStore.moveDevice(dropResult, list, list === "store" ? "rack" : "store");
-    } else if (dropResult.removedIndex !== dropResult.addedIndex) {
-        rackStore.reorderDevices(dropResult, list);
+function onDrop(dropResult: DropResult) {
+    if (dropResult.removedIndex === null && dropResult.addedIndex !== null) {
+        rackStore.moveDeviceToRack(dropResult.payload.device, dropResult.addedIndex);
+        selectedDevice.value = dropResult.payload.device;
+    } else if (dropResult.removedIndex !== null && dropResult.addedIndex !== null && dropResult.payload.list === "rack") {
+        rackStore.reorderRackDevices(dropResult.payload.device, dropResult.removedIndex, dropResult.addedIndex);
     }
-
-    if (selectedDevice.value && rackStore.rackDevices.findIndex((d) => d.id === selectedDevice.value?.id) === -1) {
-        selectedDevice.value = undefined;
-    }
-
-    if (!selectedDevice.value && rackStore.rackDevices.length === 1) selectedDevice.value = rackStore.rackDevices[0];
 }
 
 function touchStart(touchEvent: TouchEvent) {
@@ -77,8 +68,9 @@ function touchStart(touchEvent: TouchEvent) {
     const posYStart = touchEvent.changedTouches[0].clientY;
     addEventListener("touchend", (touchEvent) => touchEnd(touchEvent as TouchEvent, posYStart), { once: true });
 }
+
 function touchEnd(touchEvent: TouchEvent, posYStart: number) {
-    // We only care if one finger is used
+    // I only care if one finger is used
     if (touchEvent.changedTouches.length !== 1) return;
     const posYEnd = touchEvent.changedTouches[0].clientY;
     if (posYStart > posYEnd) {
@@ -89,25 +81,17 @@ function touchEnd(touchEvent: TouchEvent, posYStart: number) {
 }
 
 function createDevice() {
-    const newDevice = rackStore.createDevice();
+    const newDevice = rackStore.createNewDevice();
     toggleEditor(newDevice);
 }
 
 function onDeviceClick(device: Outboard) {
     selectedDevice.value = device;
-    // document.title = "App - " + device.label;
 }
 
-function startDragging(dragging: DragResult) {
-    currentlyDragging.value = dragging.payload as Outboard;
+function moveBackToStore(device: Outboard) {
+    rackStore.moveDeviceBackToStore(device);
 }
-function stopDragging() {
-    currentlyDragging.value = null;
-}
-
-// onMounted(() => {
-//     if (selectedDevice.value) document.title = "App - " + selectedDevice.value.label;
-// });
 
 watch(
     () => selectedDevice.value,
@@ -119,18 +103,14 @@ watch(
 
 <template>
     <main class="h-full flex">
-        <SidebarStore
-            :show="showStore"
-            @dragdevice="(dropResult: DragResult) => onDrop(dropResult, 'store')"
-            @openeditor="toggleEditor"
-            @createdevice="createDevice"
-        />
+        <SidebarStore :show="showStore" @openeditor="toggleEditor" @createdevice="createDevice" />
         <!-- box -->
         <BoxContainer class="w-full" @touchstart="touchStart">
             <template v-slot:header>
                 <!-- header -->
                 <ToolBar
                     class="mx-2 my-3"
+                    :show-toggle-console="isDesktop"
                     @toggleconsole="showConsole = !showConsole"
                     @togglestore="showStore = !showStore"
                     @togglecollapseall="toggleCollapseAll"
@@ -141,16 +121,14 @@ watch(
             <RackContainer :showConsole="showConsole">
                 <Container
                     class="h-full"
-                    :get-child-payload="(index: number) => rackStore.rackDevices[index]"
+                    :get-child-payload="(index: number) => ({ list: 'rack', device: rackStore.rackDevices[index] })"
+                    :fire-related-events-only="true"
                     drag-handle-selector=".column-drag-handle"
                     group-name="devices"
                     data-index="rack"
                     orientation="vertical"
-                    lock-axis="y"
-                    v-if="rackStore.midi"
-                    @drop="(dropResult: DragResult) => onDrop(dropResult, 'rack')"
-                    @drag-start="startDragging"
-                    @drag-end="stopDragging"
+                    @drop="(drop: DropResult) => onDrop(drop)"
+                    v-if="rackStore.midi !== undefined || rackStore.http !== undefined"
                 >
                     <!-- devices -->
                     <Draggable v-for="device in rackStore.rackDevices" :key="device.id">
@@ -163,14 +141,14 @@ watch(
                             :device="(device as Outboard)"
                             :midi="(rackStore.midi as Midi)"
                             :is-selected="selectedDevice !== undefined && selectedDevice.id === device.id"
-                            :init-completed="initialized"
                             @openeditor="() => toggleEditor(device as Outboard)"
+                            @removedevice="() => moveBackToStore(device as Outboard)"
                             @click="onDeviceClick(device as Outboard)"
                         />
                     </Draggable>
                 </Container>
 
-                <template v-slot:footer v-if="rackStore.console">
+                <template v-slot:footer v-if="rackStore.console && isDesktop">
                     <!-- console -->
                     <ConsoleDevice
                         v-show="showConsole && rackStore.console"

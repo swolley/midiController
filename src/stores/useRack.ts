@@ -1,15 +1,45 @@
+/* eslint no-console: ["error", { allow: ["warn", "info", "error"] }] */
 import { Midi } from "@/services/classes/Midi";
 import RackConsole from "@/services/classes/RackConsole";
-import type { DropResult, IDeviceConfig } from "@/services/types/devices";
+import type { IDeviceConfig } from "@/services/types/devices";
 import type { CategorizedDeviceList, IAppStoreProps } from "@/services/types/stores";
-import { defineStore } from "pinia";
+import { defineStore, type StateTree } from "pinia";
 import type { Output } from "webmidi";
 import outboards from "../../config/outboard";
 import { Outboard } from "@/services/classes/Outboard";
 
-function checkBeforeMoveDevice(list: Outboard[], from: number, to: number) {
-    if (from < 0 || to < 0) throw new Error("Position cannot be negative");
-    if (from > list.length) throw new Error("Position cannot be out of range");
+const consoleColor = ["%cRackStore", "color: #437bad"];
+
+function checkBeforeMoveDevice(list: Outboard[], index: number) {
+    if (index < 0) throw new Error("Position cannot be negative");
+    if (index > list.length) throw new Error("Position cannot be out of range");
+}
+
+function logInitFinished(totalDevices: number, totalCategories: number) {
+    console.info(
+        ...consoleColor,
+        `Initialized ${totalDevices} ${totalDevices === 1 ? "device" : "devices"} in ${totalCategories} ${totalCategories === 1 ? "category" : "categories"}`
+    );
+}
+
+function moveDevice(
+    fromList: Outboard[],
+    fromIdx: number,
+    toList: Outboard[],
+    toIdx: number,
+    fromName: "rack" | keyof CategorizedDeviceList,
+    toName: "rack" | keyof CategorizedDeviceList,
+    device: Outboard
+) {
+    if (fromIdx === -1) throw new Error(`Device ${device.id} not found in ${fromName} list`);
+    if (toIdx === -1) throw new Error(`Device ${device.id} not found in ${toName} list`);
+    checkBeforeMoveDevice(fromList, fromIdx);
+    checkBeforeMoveDevice(toList, toIdx);
+    const removed = fromList.splice(fromIdx, 1)[0];
+    if (!removed) throw new Error(`Unable to remove device from ${fromName} list`);
+    if (toName !== "rack" && device.category !== toName) removed.category = toName;
+    toList.splice(toIdx, 0, removed);
+    if (fromName !== toName) console.info(...consoleColor, `Device ${device.id} moved to ${toName} list`);
 }
 
 export const useRack = defineStore("rack", {
@@ -45,70 +75,89 @@ export const useRack = defineStore("rack", {
         interfaces: (state) => () => {
             return [...(state.midi ? (state.midi.activeOutputs as Output[]) : []), ...(state.http ? (state.http.activeOutputs as unknown[]) : [])];
         },
+        totalDevices: (state) => Object.values(state.availableDevices).reduce((acc, category) => acc + category.length, 0) + state.rackDevices.length,
     },
     actions: {
         async init() {
             try {
                 if (!Object.keys(this.availableDevices).length) {
                     const groups: Record<string, Outboard[]> = {};
-                    const sorted = outboards
-                        .sort((a: IDeviceConfig, b: IDeviceConfig) =>
-                            (a.category || "uncategozized") < (b.category || "uncategozized") && a.label < b.label ? 1 : -1
-                        )
-                        .map((d) => new Outboard(d));
+                    const sorted = outboards.sort((a: IDeviceConfig, b: IDeviceConfig) =>
+                        (a.category || "uncategozized") < (b.category || "uncategozized") && a.label < b.label ? 1 : -1
+                    );
 
                     sorted.forEach((device) => {
-                        // if (!device.category) device.category = "uncategorized";
+                        if (!device.category) device.category = "uncategorized";
+                        const outboard = new Outboard(device);
                         if (!((device.category as string) in groups)) {
-                            groups[device.category] = [device];
+                            groups[device.category] = [outboard];
                         } else {
-                            groups[device.category].push(device);
+                            groups[device.category].push(outboard);
                         }
                     });
 
                     this.availableDevices = groups;
+
+                    logInitFinished(
+                        Object.values(this.availableDevices).reduce((acc, category) => acc + category.length, 0),
+                        Object.keys(this.availableDevices).length
+                    );
                 }
+
                 this.console = this.console = new RackConsole();
                 this.midi = await Midi.init();
                 // this.http = await Http.init();
                 return true;
             } catch (e) {
-                // eslint-disable-next-line no-console
-                console.error((e as Error).message);
+                console.error(...consoleColor, (e as Error).message);
                 return false;
             }
         },
-        moveDeviceToRack(category: keyof CategorizedDeviceList, from: number, to: number) {
-            if (!(category in this.availableDevices)) throw new Error(`Category ${category} not available`);
-            checkBeforeMoveDevice(this.availableDevices[category], from, to);
-
-            const removed = this.availableDevices[category].splice(from, 1)[0];
-            if (!removed) throw new Error("Unable to remove device");
-
-            (this.rackDevice as unknown as Outboard[]).splice(to, 0, removed);
+        moveDeviceToRack(device: Outboard, toIdx: number) {
+            try {
+                const fromCategory = device.category;
+                if (!(fromCategory in this.availableDevices)) throw new Error(`Category ${fromCategory} not available`);
+                const fromIdx = this.availableDevices[fromCategory].findIndex((d) => d.id === device.id);
+                moveDevice(this.availableDevices[fromCategory], fromIdx, this.rackDevices as Outboard[], toIdx, fromCategory, "rack", device);
+            } catch (e) {
+                console.error(...consoleColor, (e as Error).message);
+            }
         },
-        // moveDevice(dropResult: DropResult, from: "store" | "rack", to: "store" | "rack") {
-        //     const fromRealList = from === "rack" ? this.rackDevices : this.availableDevices[dropResult.payload.device.category || "uncategorized"];
-        //     const toRealList = to === "rack" ? this.rackDevices : this.availableDevices[dropResult.payload.device.category || "uncategorized"];
-        //     const removed = fromRealList.splice(dropResult.removedIndex, 1)[0];
-        //     if (removed) toRealList.splice(dropResult.addedIndex, 0, removed);
-        // },
-        reorderRackDevices(dropResult: DropResult) {
-            if (Number.isNaN(dropResult.addedIndex) || Number.isNaN(dropResult.removedIndex)) throw new Error("Missing indexes");
-            checkBeforeMoveDevice(this.rackDevices as Outboard[], dropResult.removedIndex, dropResult.addedIndex);
-
-            const removed = this.rackDevices.splice(dropResult.removedIndex, 1)[0];
-            if (!removed) throw new Error("Unable to remove device");
-
-            this.rackDevices.splice(dropResult.addedIndex, 0, removed);
+        reorderCategoryDevices(device: Outboard, fromIdx: number, toIdx: number, fromCategory?: "rack" | keyof CategorizedDeviceList) {
+            try {
+                let originList: Outboard[] = this.rackDevices as Outboard[];
+                if (fromCategory !== "rack") {
+                    fromCategory = device.category;
+                    if (!(fromCategory in this.availableDevices)) throw new Error(`Category ${fromCategory} not available`);
+                    originList = this.availableDevices[fromCategory];
+                }
+                moveDevice(originList, fromIdx, originList, toIdx, fromCategory, fromCategory, device);
+            } catch (e) {
+                console.error(...consoleColor, (e as Error).message);
+            }
         },
-        reorderCategoryDevices(dropResult: DropResult) {
-            if (!("group" in dropResult.payload)) throw new Error("No group specified");
-            if (!(dropResult.payload.group in this.availableDevices)) throw new Error(`Category ${dropResult.payload.group} not available`);
-            if (Number.isNaN(dropResult.addedIndex) || Number.isNaN(dropResult.removedIndex)) throw new Error("Missing indexes");
+        reorderRackDevices(device: Outboard, fromIdx: number, toIdx: number) {
+            this.reorderCategoryDevices(device, fromIdx, toIdx, "rack");
+        },
+        moveDeviceToCategory(device: Outboard, toCategory: keyof CategorizedDeviceList, toIdx: number, fromCategory?: "rack" | keyof CategorizedDeviceList) {
+            try {
+                let originList: Outboard[] = this.rackDevices as Outboard[];
+                if (fromCategory !== "rack") {
+                    fromCategory = device.category;
+                    if (!(fromCategory in this.availableDevices)) throw new Error(`Category ${fromCategory} not available`);
+                    originList = this.availableDevices[fromCategory];
+                }
+                if (!(toCategory in this.availableDevices)) throw new Error(`Category ${toCategory} not available`);
+                const destinatioList = this.availableDevices[toCategory];
+                const fromIdx = originList.findIndex((d) => d.id === device.id);
 
-            const category = this.availableDevices[dropResult.payload.group];
-            category.splice(dropResult.addedIndex, 0, category.splice(dropResult.removedIndex, 1)[0]);
+                moveDevice(originList, fromIdx, destinatioList, toIdx, fromCategory, toCategory, device);
+            } catch (e) {
+                console.error(...consoleColor, (e as Error).message);
+            }
+        },
+        moveDeviceBackToStore(device: Outboard) {
+            this.moveDeviceToCategory(device, device.category, this.availableDevices[device.category].length, "rack");
         },
         removeDevice(device: Outboard) {
             if (device.stock) return;
@@ -123,12 +172,8 @@ export const useRack = defineStore("rack", {
                 }
             }
         },
-        createDevice(): Outboard {
-            let totalDevices = 0;
-            for (const category in this.availableDevices) {
-                totalDevices += this.availableDevices[category].length;
-            }
-            const name = "newly-created-" + (totalDevices + 1);
+        createNewDevice(): Outboard {
+            const name = "device-" + (this.totalDevices + 1);
             const newDevice: IDeviceConfig = {
                 backgroundColor: "transparent",
                 category: "uncategorized",
@@ -143,10 +188,9 @@ export const useRack = defineStore("rack", {
                 },
             };
             // console.log(newDevice);
-            const instance = new Outboard(newDevice);
-            this.availableDevices["uncategorized"].push(instance);
+            // this.availableDevices["uncategorized"].push(instance);
 
-            return instance;
+            return new Outboard(newDevice);
         },
 
         changeDeviceInterface(device: Outboard, outputInterface: Output | undefined) {
@@ -175,13 +219,13 @@ export const useRack = defineStore("rack", {
                 return JSON.stringify(state);
             },
             deserialize(value) {
-                const newState: IAppStoreProps = JSON.parse(value);
-                newState.rackDevices = newState.rackDevices.map((d) => new Outboard(d));
+                const newState: StateTree = JSON.parse(value);
+                newState.rackDevices = newState.rackDevices.map((d: IDeviceConfig) => new Outboard(d));
                 for (const category in newState.availableDevices) {
-                    newState.availableDevices[category] = newState.availableDevices[category].map((d) => new Outboard(d));
+                    newState.availableDevices[category] = newState.availableDevices[category].map((d: IDeviceConfig) => new Outboard(d));
                 }
 
-                return newState;
+                return newState as IAppStoreProps;
             },
         },
     },
