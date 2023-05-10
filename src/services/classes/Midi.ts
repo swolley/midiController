@@ -11,9 +11,7 @@ export class Midi extends AbstractComunicator implements IComunicatorInterface {
     public static async init(disabled?: string[]): Promise<Midi | undefined> {
         try {
             await WebMidi.enable({ sysex: true });
-            // eslint-disable-next-line no-console
             console.info(...consoleColor, "WebMidi enabled ", true);
-            // eslint-disable-next-line no-console
             console.info(...consoleColor, "Sysex enabled ", WebMidi.interface.sysexEnabled);
 
             WebMidi.inputs.forEach((entry) => {
@@ -29,7 +27,6 @@ export class Midi extends AbstractComunicator implements IComunicatorInterface {
 
             return new Midi(WebMidi.inputs, WebMidi.outputs, disabled);
         } catch (err) {
-            // eslint-disable-next-line no-console
             console.error(...consoleColor, "WebMidi could not be enabled: " + JSON.stringify(err));
         }
     }
@@ -57,11 +54,9 @@ export class Midi extends AbstractComunicator implements IComunicatorInterface {
             }
 
             const octects = Midi.getPrintableOctects(messageTypeNumber, channel, note, velocity, 2);
-            // eslint-disable-next-line no-console
             console.info(...consoleColor, "sending", octects, "through", output.name, "to", selectedOutboard.label);
             return true;
         } catch (e) {
-            // eslint-disable-next-line no-console
             console.error(...consoleColor, (e as Error).message);
             return false;
         }

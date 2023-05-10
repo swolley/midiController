@@ -26,12 +26,10 @@ export class Http extends AbstractComunicator implements IComunicatorInterface {
             }
 
             const octects = Http.getPrintableOctects(messageTypeNumber, channel, note, velocity, 2);
-            // eslint-disable-next-line no-console
             console.info(...consoleColor, "sending", octects, "through", output.name, "to", selectedOutboard.label);
             return true;
         } catch (e) {
             // success = false;
-            // eslint-disable-next-line no-console
             console.error(...consoleColor, (e as Error).message);
             return false;
         } /*finally {

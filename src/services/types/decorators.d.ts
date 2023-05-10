@@ -35,7 +35,6 @@ interface ObjectListener<T> {
 
 export class MyObjectListener implements ObjectListener<any> {
     onObjectCreation(obj: any) {
-        // eslint-disable-next-line no-console
         console.info("Object created: " + JSON.stringify(obj));
     }
 }

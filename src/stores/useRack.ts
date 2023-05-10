@@ -1,4 +1,3 @@
-/* eslint no-console: ["error", { allow: ["warn", "info", "error"] }] */
 import { Midi } from "@/services/classes/Midi";
 import RackConsole from "@/services/classes/RackConsole";
 import type { IDeviceConfig } from "@/services/types/devices";
@@ -165,9 +164,7 @@ export const useRack = defineStore("rack", {
                 const list = this.availableDevices[category];
                 const found = list.findIndex((d: IDeviceConfig) => d.id === device.id);
                 if (found !== -1) {
-                    /*const removed = */ list.splice(found, 1)[0];
-                    // found = this.rackDevices.findIndex((d) => d.id === removed.id);
-                    // if (found) this.rackDevices.splice(found, 1)[0];
+                    list.splice(found, 1)[0];
                     break;
                 }
             }
@@ -187,8 +184,7 @@ export const useRack = defineStore("rack", {
                     rotaries: [],
                 },
             };
-            // console.log(newDevice);
-            // this.availableDevices["uncategorized"].push(instance);
+            console.info(...consoleColor, "Created new Device for editor");
 
             return new Outboard(newDevice);
         },

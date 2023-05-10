@@ -6,12 +6,12 @@
         "build": "rm -rf dist/* && vue-tsc --noEmit && vite build",
         "preview": "vite preview --port 5050",
         "test:unit": "vitest --environment jsdom",
-        "test:e2e": "start-server-and-test preview http://127.0.0.1:5050/ 'cypress open'",
-        "test:e2e:ci": "start-server-and-test preview http://127.0.0.1:5050/ 'cypress run'",
+        "test:e2e": "cypress open",
+        "test:e2e:ci": "cypress run",
         "typecheck": "vue-tsc --noEmit -p tsconfig.vitest.json --composite false",
         "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
         "cm": "git-cz",
-        "release": "standard-version"
+        "release": "standard-version -a && git push --follow-tags origin master"
     },
     "dependencies": {
         "@vueuse/components": "^9.13.0",
@@ -64,6 +64,11 @@
     "config": {
         "commitizen": {
             "path": "./node_modules/cz-conventional-changelog"
+        }
+    },
+    "standard-version": {
+        "scripts": {
+            "postbump": "node -p \"'export const VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts && git add src/version.ts"
         }
     }
 }

@@ -12,16 +12,14 @@ export default defineConfig({
         },
     },
     base: "/",
-    // build: {
-    //     rollupOptions: {
-    //         output: {
-    //             entryFileNames: `assets/[name]-ts${Date.now()}.js`,
-    //             chunkFileNames: `assets/[name]-ts${Date.now()}.js`,
-    //             assetFileNames: `assets/[name]-ts${Date.now()}.[ext]`,
-    //         },
-    //     },
-    // },
     build: {
+        rollupOptions: {
+            output: {
+                entryFileNames: `assets/[name]-ts${Date.now()}.js`,
+                chunkFileNames: `assets/[name]-ts${Date.now()}.js`,
+                assetFileNames: `assets/[name]-ts${Date.now()}.[ext]`,
+            },
+        },
         sourcemap: process.env.NODE_ENV !== "production",
     },
     test: {

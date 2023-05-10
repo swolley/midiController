@@ -12,18 +12,19 @@ module.exports = {
     ],
     plugins: ["sonarjs"],
     rules: {
-        "no-console": 1, // Means warning
+        "no-console": [
+            "warn",
+            {
+                allow: ["warn", "info", "error"],
+            },
+        ],
         "prettier/prettier": 2, // Means error
         "sonarjs/no-small-switch": "off",
     },
     env: {
         "vue/setup-compiler-macros": true,
     },
-    ignorePatterns: [
-        "commitlint.config.js",
-        "postcss.config.js",
-        "tailwind.config.js",
-    ],
+    ignorePatterns: ["commitlint.config.js", "postcss.config.js", "tailwind.config.js"],
     overrides: [
         {
             files: ["cypress/integration/**.spec.{js,ts,jsx,tsx}"],
