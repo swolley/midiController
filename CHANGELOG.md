@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.2](https://github.com/swolley/midicontroller/compare/v0.0.1...v0.0.2) (2023-05-10)
+
+
+### Features
+
+* **commitizen:** test commitizen configs ([8dbbd84](https://github.com/swolley/midicontroller/commit/8dbbd84a751a8edd23e91deba62c21c03538dd74))
+* **editor:** working on device editor components ([179e91e](https://github.com/swolley/midicontroller/commit/179e91ee321da0705cbcf7696573c428c47cccc2))
+
 ### [0.0.1](https://github.com/swolley/midicontroller/compare/v0.0.0...v0.0.1) (2023-05-09)
 
 

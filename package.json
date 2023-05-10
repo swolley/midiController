@@ -1,6 +1,6 @@
 {
     "name": "web-midicontroller",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "scripts": {
         "dev": "vite",
         "build": "rm -rf dist/* && vue-tsc --noEmit && vite build",
