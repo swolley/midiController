@@ -141,8 +141,8 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
                     </option>
                 </select>
                 <select class="btn border-3d text-xs uppercase h-6" :class="{ invert: outPanel.isFgInverted }" title="Set Midi channel">
-                    <option v-for="channel in midiChannels" :key="channel" :value="channel">
-                        {{ "Channel " + channel }}
+                    <option v-for="channel in midiChannels" :key="channel" :value="channel" class="text-right">
+                        {{ "Channel " + ("0" + channel).substr(-2) }}
                     </option>
                 </select>
             </div>

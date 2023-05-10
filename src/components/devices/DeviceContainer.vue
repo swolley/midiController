@@ -38,20 +38,24 @@ function toggleCollapsed() {
     <!-- DEVICE -->
     <div
         class="device"
-        :class="{ collapsed: currentlyCollapsed }"
+        :class="{ collapsed: currentlyCollapsed || collapsed }"
         :style="{ 'background-color': background.toString(), 'box-shadow': selected ? '0px 10px 12px 6px' : '0px 1px 4px' }"
     >
-        <div class="px-2 flex flex-col items-center" :class="collapsed ? 'justify-center' : 'justify-between'">
+        <div
+            class="px-2 flex flex-col items-center"
+            v-show="!collapsed && !currentlyCollapsed"
+            :class="currentlyCollapsed || collapsed ? 'justify-center' : 'justify-between'"
+        >
             <ScrewIcon />
             <DragIcon v-if="draggable" :class="[{ invert }, 'column-drag-handle']" />
-            <ScrewIcon v-show="!collapsed" />
+            <ScrewIcon />
         </div>
         <div class="flex grow relative px-2" :class="display === 'vertical' ? 'flex-col' : 'flex-row'">
             <div class="flex justify-between relative">
                 <CollapseButton
                     class="items-start"
                     v-if="collapsable"
-                    :collapsed="collapsed"
+                    :collapsed="currentlyCollapsed || collapsed"
                     :invert="invert"
                     @togglecollapse="toggleCollapsed"
                     title="Toggle collapse"
@@ -59,15 +63,19 @@ function toggleCollapsed() {
                 <!-- custom headers -->
                 <slot name="header"></slot>
             </div>
-            <div class="flex grow relative h-full mx-auto w-full lg:w-11/12" v-show="!collapsed">
+            <div class="flex grow relative h-full mx-auto w-full lg:w-11/12" v-show="!currentlyCollapsed && !collapsed">
                 <!-- device controllers -->
                 <slot></slot>
             </div>
         </div>
-        <div class="px-2 flex flex-col items-center" :class="collapsed ? 'justify-center' : 'justify-between'">
+        <div
+            class="px-2 flex flex-col items-center"
+            v-show="!collapsed && !currentlyCollapsed"
+            :class="currentlyCollapsed || collapsed ? 'justify-center' : 'justify-between'"
+        >
             <ScrewIcon />
             <DragIcon v-if="draggable" :class="[{ invert }, 'column-drag-handle']" />
-            <ScrewIcon v-show="!collapsed" />
+            <ScrewIcon />
         </div>
     </div>
 </template>
@@ -85,8 +93,8 @@ function toggleCollapsed() {
     }
 
     &.collapsed {
-        min-height: 40px;
-        max-height: 40px;
+        min-height: unset;
+        // max-height: 40px;
     }
 }
 </style>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { DragResult, DropResult, IControllerConfigs, ILcdControllerConfigs, IMessageControllerConfigs } from "@/services/types/devices";
+import type { DropResult, IControllerConfigs, ILcdControllerConfigs, IMessageControllerConfigs } from "@/services/types/devices";
 import { Container, Draggable } from "vue-dndrop";
 import LcdIcon from "@/components/icons/LcdIcon.vue";
 import LightLed from "@/components/controllers/LightLed.vue";
@@ -25,16 +25,6 @@ function onDrop(dropResult: DropResult, list: "rotaries" | "toggles" | "lcds") {
     // let result = applyDrag(groupIndex === "rack" ? props.rackDevices : props.availableDevices, dropResult);
     //   Vue.set(this.groups, groupIndex, result);
     console.log("drop from", list);
-}
-
-function applyDrag(list: Outboard[], DropResult: Event) {
-    // const { removedIndex, addedIndex, payload } = dragResult;
-    // if (removedIndex === null && addedIndex === null) return list;
-    // const result = [...list];
-    // let itemToAdd = payload;
-    // if (removedIndex !== null) itemToAdd = result.splice(removedIndex, 1)[0];
-    // if (addedIndex !== null) result.splice(addedIndex, 0, itemToAdd);
-    // return result;
 }
 
 function createController(type: "rotaries" | "toggles" | "lcds") {
@@ -80,10 +70,6 @@ function setBorderColor(event: Event, forcedValue?: string) {
     deviceStore.changeDeviceBorderColor(props.device, forcedValue || (event.target as HTMLInputElement).value);
 }
 
-function setId(e: Event) {
-    deviceStore.changeDeviceId(props.device, (e.target as HTMLInputElement).value);
-}
-
 function setLabel(e: Event) {
     deviceStore.changeDeviceLabel(props.device, (e.target as HTMLInputElement).value);
 }
@@ -94,21 +80,18 @@ function setLabel(e: Event) {
         <div class="sticky inset-x-0 top-0 left-0 bg-black/80 border border-white/5 rounded pt-1 z-10 shadow mb-1">
             <div class="flex gap-2 px-2 ml-5" v-if="device">
                 <div class="flex flex-col grow">
-                    <label for="id" class="form-label">id</label>
-                    <input type="text" name="id" class="form-top-input" @change="setId" />
-                </div>
-                <div class="flex flex-col grow">
                     <label for="deviceLabel" class="form-label">label</label>
-                    <input type="text" name="deviceLabel" class="form-top-input" @change="setLabel" required />
+                    <input type="text" name="deviceLabel" class="form-top-input" @change="setLabel" :value="device.label" required />
                 </div>
                 <div class="flex flex-col grow">
                     <label for="backgroundColor" class="form-label">background color</label>
                     <div class="form-top-input flex items-center">
-                        <div v-if="device.backgroundColor.isTransparent()" class="bg-transparent grow cursor-pointer" @click="() => backgroundInput?.click()">
+                        <div v-show="device.backgroundColor.isTransparent()" class="bg-transparent grow cursor-pointer" @click="() => backgroundInput?.click()">
                             transparent
                         </div>
                         <input
-                            v-else
+                            v-show="!device.backgroundColor.isTransparent()"
+                            ref="backgroundInput"
                             type="color"
                             name="backgroundColor"
                             class="bg-transparent grow cursor-pointer"
@@ -116,17 +99,22 @@ function setLabel(e: Event) {
                             @change="setBackgroundColor"
                             required
                         />
-                        <IconClose class="text-2xl p-1 cursor-pointer" @click="(event) => setBackgroundColor(event, 'transparent')" />
+                        <IconClose
+                            v-if="!device.backgroundColor.isTransparent()"
+                            class="text-2xl p-1 cursor-pointer"
+                            @click="(event) => setBackgroundColor(event, 'transparent')"
+                        />
                     </div>
                 </div>
                 <div class="flex flex-col grow">
                     <label for="panelColor" class="form-label">panel color</label>
                     <div class="form-top-input flex items-center">
-                        <div v-if="device.panelColor.isTransparent()" class="bg-transparent grow cursor-pointer" @click="() => panelInput?.click()">
+                        <div v-show="device.panelColor.isTransparent()" class="bg-transparent grow cursor-pointer" @click="() => panelInput?.click()">
                             transparent
                         </div>
                         <input
-                            v-else
+                            v-show="!device.panelColor.isTransparent()"
+                            ref="panelInput"
                             type="color"
                             name="panelColor"
                             class="bg-transparent grow cursor-pointer"
@@ -134,17 +122,22 @@ function setLabel(e: Event) {
                             @change="setPanelColor"
                             required
                         />
-                        <IconClose class="text-2xl p-1 cursor-pointer" @click="(event) => setPanelColor(event, 'transparent')" />
+                        <IconClose
+                            v-if="!device.backgroundColor.isTransparent()"
+                            class="text-2xl p-1 cursor-pointer"
+                            @click="(event) => setPanelColor(event, 'transparent')"
+                        />
                     </div>
                 </div>
                 <div class="flex flex-col grow">
                     <label for="borderColor" class="form-label">border color</label>
                     <div class="form-top-input flex items-center">
-                        <div v-if="device.borderColor.isTransparent()" class="bg-transparent grow cursor-pointer" @click="() => borderInput?.click()">
+                        <div v-show="device.borderColor.isTransparent()" class="bg-transparent grow cursor-pointer" @click="() => borderInput?.click()">
                             transparent
                         </div>
                         <input
-                            v-else
+                            v-show="!device.borderColor.isTransparent()"
+                            ref="borderInput"
                             type="color"
                             name="borderColor"
                             class="bg-transparent grow cursor-pointer"
@@ -152,7 +145,11 @@ function setLabel(e: Event) {
                             @change="setBorderColor"
                             required
                         />
-                        <IconClose class="text-2xl p-1 cursor-pointer" @click="(event) => setBorderColor(event, 'transparent')" />
+                        <IconClose
+                            v-if="!device.backgroundColor.isTransparent()"
+                            class="text-2xl p-1 cursor-pointer"
+                            @click="(event) => setBorderColor(event, 'transparent')"
+                        />
                     </div>
                 </div>
             </div>
