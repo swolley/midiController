@@ -1,16 +1,9 @@
 <script setup lang="ts">
-import { RouterView } from "vue-router";
+import HomeView from "./views/HomeView.vue";
 </script>
 
 <template>
-    <RouterView v-slot="{ Component }">
-        <template v-if="Component">
-            <Transition mode="out-in">
-                <!-- main content -->
-                <component :is="Component"></component>
-            </Transition>
-        </template>
-    </RouterView>
+    <HomeView />
 </template>
 
 <style lang="scss"></style>
