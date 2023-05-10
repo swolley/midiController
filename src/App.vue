@@ -8,11 +8,6 @@ import { RouterView } from "vue-router";
             <Transition mode="out-in">
                 <!-- main content -->
                 <component :is="Component"></component>
-
-                <!-- loading state -->
-                <!-- <template #fallback>
-                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">Loading...</div>
-                </template> -->
             </Transition>
         </template>
     </RouterView>
