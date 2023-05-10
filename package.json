@@ -3,7 +3,7 @@
     "author": {
         "name": "Swolley"
     },
-    "version": "0.0.2",
+    "version": "0.0.3",
     "scripts": {
         "dev": "vite",
         "build": "rm -rf dist/* && vue-tsc --noEmit && vite build",
@@ -65,11 +65,6 @@
     "config": {
         "commitizen": {
             "path": "./node_modules/cz-conventional-changelog"
-        }
-    },
-    "standard-version": {
-        "scripts": {
-            "postbump": "node -p \"'export const VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts && git add src/version.ts"
         }
     }
 }
