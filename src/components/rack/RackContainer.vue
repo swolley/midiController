@@ -10,7 +10,7 @@ import type RackConsole from "@/services/classes/RackConsole";
 import type { Outboard } from "@/services/classes/Outboard";
 import { useWindowSize } from "@vueuse/core";
 import type { DropResult } from "@/services/types/devices";
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 
 defineEmits<{
     (event: "openeditor", device: Outboard): void;
@@ -21,11 +21,15 @@ defineEmits<{
 const rackStore = useRack();
 
 const collapseAll = ref<boolean>(false);
-const selectedDevice = ref<Outboard | undefined>(rackStore.rackDevices.length ? (rackStore.rackDevices[0] as Outboard) : undefined);
+const selectedDevice = ref<Outboard | undefined>();
 const showConsole = ref<boolean>(true);
 
 const { width } = useWindowSize();
 const isDesktop = computed(() => width.value >= 1024);
+
+function selectFirstDevice() {
+    selectedDevice.value = rackStore.rackDevices.length ? (rackStore.rackDevices[0] as Outboard) : undefined;
+}
 
 function toggleCollapseAll(collapse: boolean) {
     collapseAll.value = collapse;
@@ -46,6 +50,7 @@ function focusDevice(device: Outboard) {
 
 function moveBackToStore(device: Outboard) {
     rackStore.moveDeviceBackToStore(device);
+    selectFirstDevice();
 }
 
 watch(
@@ -54,6 +59,10 @@ watch(
         if (selectedDevice.value) document.title = "App - " + selectedDevice.value.label;
     }
 );
+
+onMounted(() => {
+    selectFirstDevice();
+});
 </script>
 
 <template>

@@ -18,10 +18,7 @@ import AngleUpIcon from "../icons/AngleUpIcon.vue";
 import { StringUtils } from "@/services/classes/Utils";
 import type { CategorizedDeviceList } from "@/services/types/stores";
 
-defineEmits(["createdevice", "openeditor"]);
-defineProps<{
-    show: boolean;
-}>();
+defineEmits(["createdevice", "openeditor" /*, "closestore"*/]);
 
 const rackStore = useRack();
 rackStore.init();
@@ -55,24 +52,23 @@ function askRemoveDevice(device: Outboard) {
 </script>
 
 <template>
-    <!-- <div class="sidebar fixed md:static z-50 bg-black shadow-lg border" :class="[{ 'p-2': show }, show ? 'w-2/3 md:w-1/3 xl:w-1/5' : 'w-0 overflow-hidden']"></div> -->
-    <div class="sidebar" :class="[{ 'p-2': show }, show ? 'w-2/3 lg:w-1/4 xl:w-1/5' : 'w-0 overflow-hidden']">
-        <div
-            class="rounded border-2 border-dashed flex items-center justify-center p-5 m-1 mb-3 opacity-30 hover:opacity-70 transition-opacity cursor-pointer"
-            @click="$emit('createdevice')"
-        >
-            <PlusIcon class="text-gray-100 text-xl" />
-        </div>
-        <div v-for="(group, name) in (groupedDevices as SidebarDevices)" :key="name">
-            <div class="flex text-gray-500 items-center px-1 cursor-pointer" @click="group.opened = !group.opened">
-                <div class="grow select-none">{{ StringUtils.ucFirst(name) }} ({{ groupedDevices[name].devices.length }})</div>
-                <AngleDownIcon v-if="group.opened" />
-                <AngleUpIcon v-else />
+    <div class="sidebar">
+        <div class="relative h-full">
+            <div
+                class="rounded border-2 border-dashed flex items-center justify-center p-5 m-1 mb-3 opacity-30 hover:opacity-70 transition-opacity cursor-pointer"
+                @click="$emit('createdevice')"
+            >
+                <PlusIcon class="text-gray-100 text-xl" />
             </div>
-            <Transition>
+            <div v-for="(group, name) in (groupedDevices as SidebarDevices)" :key="name">
+                <div class="flex text-gray-500 items-center px-1 cursor-pointer" @click="group.opened = !group.opened">
+                    <div class="grow select-none">{{ StringUtils.ucFirst(name) }} ({{ groupedDevices[name].devices.length }})</div>
+                    <AngleDownIcon v-if="group.opened" />
+                    <AngleUpIcon v-else />
+                </div>
                 <Container
                     v-show="group.opened"
-                    class="grow overflow-y-scroll relative"
+                    class="grow relative"
                     group-name="devices"
                     orientation="vertical"
                     :data-group="name"
@@ -80,7 +76,6 @@ function askRemoveDevice(device: Outboard) {
                     @drop="(drop: DropResult) => onDrop(drop, name)"
                 >
                     <template v-for="device in groupedDevices[name].devices" :key="device.id">
-                        <!-- <label v-if="checkGroup(device.category)" class="text-gray-600 p-2 select-none">{{ device.category || "Uncategorized" }}</label> -->
                         <Draggable class="relative last:mb-2 draggable-item">
                             <OutboardPreview
                                 class="cursor-pointer active:cursor-move opacity-95 hover:opacity-100 transition-opacity border border-gray-500"
@@ -100,7 +95,14 @@ function askRemoveDevice(device: Outboard) {
                         </Draggable>
                     </template>
                 </Container>
-            </Transition>
+            </div>
+
+            <!-- <button
+                class="rounded border border-white/10 w-full p-2 shadow bg-white/10 hover:bg-white/20 text-white transition-colors absolute bottom-0"
+                @click="$emit('showstore')"
+            >
+                Close Store
+            </button> -->
         </div>
 
         <Teleport to="body">
@@ -117,6 +119,6 @@ function askRemoveDevice(device: Outboard) {
 
 <style scoped scss>
 .sidebar {
-    @apply overflow-scroll shadow-lg h-full border border-black transition-all flex flex-col;
+    @apply overflow-y-auto shadow-lg h-full border border-black transition-all flex flex-col bg-black;
 }
 </style>

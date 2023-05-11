@@ -7,13 +7,28 @@ import SidebarStore from "@/components/devices/SidebarStore.vue";
 import DeviceEditor from "@/components/editor/DeviceEditor.vue";
 import AppConfig from "@/components/editor/AppConfig.vue";
 import { Outboard } from "@/services/classes/Outboard";
+import { SwipeDirection, useSwipe } from "@vueuse/core";
 
 const rackStore = useRack();
-
 const showStore = ref<boolean>(rackStore.rackDevices.length === 0);
 const modifiedDevice = ref<Outboard | undefined>();
 const openSettings = ref<boolean>(false);
 const openEditor = ref<boolean>(false);
+const rackcontainerel = ref();
+const { lengthX, direction } = useSwipe(rackcontainerel, {
+    passive: false,
+    // onSwipe() {
+    // },
+    onSwipeEnd() {
+        if (Math.abs(lengthX.value) > 100) {
+            if (direction.value === SwipeDirection.RIGHT) {
+                showStore.value = true;
+            } else if (direction.value === SwipeDirection.LEFT) {
+                showStore.value = false;
+            }
+        }
+    },
+});
 
 function cloneDevice(device: Outboard) {
     return new Outboard(JSON.parse(JSON.stringify(device))) as Outboard;
@@ -27,27 +42,11 @@ function toggleEditor(device?: Outboard, askConfirm = false) {
     }
     openEditor.value = device !== undefined;
 }
+
 function saveAndCloseEditor() {
     if (modifiedDevice.value) {
         modifiedDevice.value = undefined;
         openEditor.value = false;
-    }
-}
-
-function touchStart(touchEvent: TouchEvent) {
-    if (touchEvent.changedTouches.length !== 1) return;
-    const posYStart = touchEvent.changedTouches[0].clientY;
-    addEventListener("touchend", (touchEvent) => touchEnd(touchEvent as TouchEvent, posYStart), { once: true });
-}
-
-function touchEnd(touchEvent: TouchEvent, posYStart: number) {
-    // I only care if one finger is used
-    if (touchEvent.changedTouches.length !== 1) return;
-    const posYEnd = touchEvent.changedTouches[0].clientY;
-    if (posYStart > posYEnd) {
-        showStore.value = false;
-    } else if (posYStart < posYEnd) {
-        showStore.value = true;
     }
 }
 
@@ -59,11 +58,17 @@ function createDevice() {
 
 <template>
     <main class="h-full flex">
-        <SidebarStore :show="showStore" @openeditor="toggleEditor" @createdevice="createDevice" />
+        <SidebarStore
+            class="absolute md:static z-50 max-w-1/2 lg:max-w-1/4 xl:max-w-1/5"
+            :class="[{ 'p-2': showStore }, showStore ? 'w-1/2 lg:w-1/4 xl:w-1/5' : 'w-0']"
+            @openeditor="toggleEditor"
+            @createdevice="createDevice"
+            @closestore="showStore = false"
+        />
 
         <RackContainer
+            ref="rackcontainerel"
             class="w-full"
-            @touchstart="touchStart"
             @openeditor="toggleEditor"
             @togglestore="showStore = !showStore"
             @togglesettings="openSettings = !openSettings"

@@ -60,8 +60,9 @@ watch(logs, (value: IConsoleLog[]) => {
 <style scoped lang="scss">
 .console-device {
     @apply mt-0;
-    // min-height: 40px !important;
-    max-height: 80px !important;
+    min-height: 100px;
+    // max-height: 100px !important;
+    max-height: 100px;
 
     .console-block {
         @apply flex w-11/12 lg:w-10/12 mx-auto overflow-hidden;
@@ -73,7 +74,7 @@ watch(logs, (value: IConsoleLog[]) => {
             @apply text-white bg-black p-1 grow shrink overflow-y-scroll border-2 ml-3;
 
             code {
-                @apply opacity-80 hover:opacity-100 block font-digital;
+                @apply opacity-80 hover:opacity-100 transition-opacity block font-digital;
 
                 line-height: 1rem;
             }

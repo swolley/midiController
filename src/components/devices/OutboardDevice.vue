@@ -43,6 +43,7 @@ const lastValue = ref<string | undefined>();
 
 let blinkTimeout: number | null = null;
 let displayTimeout: number | null = null;
+const blinkDuration = 100;
 
 function changeInteface(output: Output | undefined) {
     deviceStore.changeDeviceInterface(props.device, output);
@@ -51,7 +52,7 @@ function changeInteface(output: Output | undefined) {
 function handleBlink(sent: boolean) {
     if (blinkTimeout) clearTimeout(blinkTimeout);
     lightStatus.value = sent ? "success" : "error";
-    blinkTimeout = setTimeout(() => (lightStatus.value = "off"), 100);
+    blinkTimeout = setTimeout(() => (lightStatus.value = "off"), blinkDuration);
 }
 function handleDisplay(value: string, note?: number) {
     if (displayTimeout) clearTimeout(displayTimeout);
@@ -60,12 +61,12 @@ function handleDisplay(value: string, note?: number) {
     displayTimeout = setTimeout(() => {
         lastValue.value = undefined;
         lastNote.value = undefined;
-    }, 300);
+    }, blinkDuration);
 }
 
 function dispatchToggle(controller: IMessageControllerConfigs, active: boolean) {
     handleDisplay(active ? "on" : "off", controller.note);
-    console.log(props.device.channel);
+    // console.log(props.device.channel);
     const sent = props.midi.send(
         props.midi.outputs[selectedInterface.value],
         props.device.channel,
@@ -149,7 +150,7 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
         </template>
 
         <div class="flex justify-between grow mt-2 gap-3">
-            <div class="flex flex-col xl:flex-row gap-1 items-center justify-start xl:w-42">
+            <div class="flex flex-col xl:flex-row gap-1 items-center justify-center xl:w-42">
                 <LcdDisplay :invert="outPanel.isFgInverted" label="value" :value="lastValue" :note="lastNote" />
                 <LcdSwitch
                     v-if="patchSelector"
@@ -159,7 +160,7 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
                 />
             </div>
             <div
-                class="flex flex-col xl:flex-row py-2 px-3 rounded-lg gap-2 items-start lg:items-center justify-center mx-5 grow"
+                class="flex flex-row py-2 px-3 rounded-lg gap-2 items-center justify-center mx-5 grow"
                 :class="{ 'shadow-md': device.borderSize || (device.panelColor && !device.panelColor.isTransparent()) }"
                 :style="{
                     'background-color': device.panelColor.toRgb() || 'transparent',
@@ -181,7 +182,7 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
                         />
                     </template>
                 </div>
-                <div class="grid gap-2 grid-flow-col" v-if="toggles.length">
+                <div class="grid gap-2 grid-cols-2 lg:grid-flow-col" v-if="toggles.length">
                     <ToggleButton
                         v-for="(toggle, idx) in toggles"
                         class="w-16"
@@ -192,7 +193,7 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
                         :data-controller="toggle.label"
                     />
                 </div>
-                <div class="grid gap-3 grid-flow-col" v-if="rotaries.length">
+                <div class="grid gap-3 grid-cols-5 lg:grid-flow-col" v-if="rotaries.length">
                     <RotaryButton
                         class="w-16"
                         v-for="(rotary, idx) in rotaries"
